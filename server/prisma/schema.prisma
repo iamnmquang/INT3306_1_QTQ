@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum FlightStatus {
+  SCHEDULED
+  DELAYED
+  DEPARTED
+  ARRIVED
+  CANCELLED
+}
+
+enum SeatClass {
+  ECONOMY
+  BUSINESS
+  FIRST_CLASS
+}
+
+enum PassengerType {
+  ADULT
+  CHILD
+  INFANT
+}
+
+model Airport {
+  id              Int      @id @default(autoincrement())
+  name            String
+  iataCode        String   @unique
+  icaoCode        String   @unique
+  country         String?
+  city            String?
+  latitude        Float?
+  longitude       Float?
+  type            String?
+
+  arrivals        Flight[] @relation("ArrivalFlights")
+  departures      Flight[] @relation("DepartureFlights")
+}
+
+model Aircraft {
+  id           String   @id @default(uuid())
+  name         String
+  manufacturer String?
+  flights      Flight[]
+}
+
+model User {
+  id                 String   @id @default(uuid())
+  name               String
+  email              String   @unique
+  password           String?
+  verifyOtp          String?
+  verifyOtpExpireAt  BigInt?
+  isAccountVerified  Boolean  @default(false)
+  resetOtp           String?
+  resetOtpExpireAt   BigInt?
+  role               Role     @default(USER)
+
+  tickets            Ticket[] @relation("UserTickets")
+}
+
+model Passenger {
+  id             String         @id @default(uuid())
+  fullName       String
+  email          String?
+  dob            DateTime?
+  passport       String?
+  passengerType  PassengerType  @default(ADULT)
+  tickets        Ticket[]
+}
+
+model Flight {
+  id                  String        @id @default(uuid())
+  flightNumber        String        @unique
+  departureTime       DateTime
+  arrivalTime         DateTime
+  estimatedDeparture  DateTime?
+  estimatedArrival    DateTime?
+  status              FlightStatus  @default(SCHEDULED)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  arrivalAirportId    Int?
+  departureAirportId  Int?
+  aircraftId          String?
+
+  arrivalAirport      Airport? @relation("ArrivalFlights", fields: [arrivalAirportId], references: [id])
+  departureAirport    Airport? @relation("DepartureFlights", fields: [departureAirportId], references: [id])
+  aircraft            Aircraft? @relation(fields: [aircraftId], references: [id])
+
+  flightSeats         FlightSeat[]
+  tickets             Ticket[]
+}
+
+model FlightSeat {
+  id          Int         @id @default(autoincrement())
+  seatClass   SeatClass    @default(ECONOMY)
+  totalSeats  Int
+  bookedSeats Int
+  price       Float
+  createdAt   DateTime     @default(now())
+
+  flightId    String?
+  flight      Flight?      @relation(fields: [flightId], references: [id])
+  tickets     Ticket[]
+}
+
+model Ticket {
+  id             String     @id @default(uuid())
+  bookingReference String   @unique
+  seatNumber       String?
+  isCancelled      Boolean  @default(false)
+  discount         Float?
+  bookedAt         DateTime @default(now())
+  cancelCode       String?
+
+  flightId         String?
+  bookedById       String?
+  flightSeatId     Int?
+  passengerId      String?
+
+  flight           Flight?     @relation(fields: [flightId], references: [id])
+  bookedBy         User?       @relation("UserTickets", fields: [bookedById], references: [id])
+  flightSeat       FlightSeat? @relation(fields: [flightSeatId], references: [id])
+  passenger        Passenger?  @relation(fields: [passengerId], references: [id])
+}
+
+model EmailVerification {
+  id         String   @id @default(uuid())
+  email      String
+  otp        String?
+  expiresAt  DateTime?
+  used       Boolean  @default(false)
+}
+
+model News {
+  id          Int       @id @default(autoincrement())
+  title       String
+  content     String?
+  thumbnailUrl String?
+  isPublished Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
