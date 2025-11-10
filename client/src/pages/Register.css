@@ -1,0 +1,121 @@
+/* auth page layout */
+.auth-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background-color: #f3f5f7;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+/* card */
+.auth-card {
+    width: 420px;
+    max-width: calc(100% - 48px);
+    background: linear-gradient(180deg, #f7fbff 0%, #eef8ff 100%);
+    border-radius: 14px;
+    padding: 26px 34px;
+    box-shadow: 0 10px 20px rgba(28, 40, 51, 0.08), 0 2px 6px rgba(28, 40, 51, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    box-sizing: border-box;
+}
+
+/* title */
+.auth-title {
+    text-align: center;
+    margin: 2px 0 18px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111;
+}
+
+/* form */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+}
+
+/* labels and inputs */
+.field-label {
+    font-size: 13px;
+    color: #2b2b2b;
+    margin-bottom: 6px;
+    margin-top: 8px;
+    font-weight: 600;
+}
+
+.field-input {
+    height: 44px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(27, 67, 91, 0.06);
+    background-color: #fff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    outline: none;
+    transition: box-shadow .15s ease, border-color .15s ease;
+}
+
+.field-input::placeholder {
+    color: #a9b7bf;
+}
+
+.field-input:focus {
+    border-color: rgba(30, 120, 220, 0.9);
+    box-shadow: 0 0 0 4px rgba(30, 120, 220, 0.06);
+}
+
+/* primary button */
+.btn-primary {
+    height: 44px;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #1e88e5, #0f78d6);
+    color: #fff;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    margin-top: 12px;
+    box-shadow: 0 6px 12px rgba(30, 120, 220, 0.16);
+    transition: transform .08s ease, box-shadow .08s ease;
+    font-size: 15px;
+}
+
+.btn-primary:active {
+    transform: translateY(1px);
+}
+
+.btn-primary:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(30, 120, 220, 0.12);
+}
+
+/* row to switch to login */
+.switch-row {
+    margin-top: 14px;
+    text-align: center;
+    color: #333;
+    font-size: 14px;
+}
+
+.switch-link {
+    color: #2b7bd7;
+    text-decoration: none;
+    margin-left: 6px;
+}
+
+.switch-link:hover {
+    text-decoration: underline;
+}
+
+/* responsive */
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 20px;
+        width: 100%;
+        border-radius: 12px;
+    }
+
+    .auth-title {
+        font-size: 16px;
+    }
+}
