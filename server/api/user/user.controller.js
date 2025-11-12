@@ -1,6 +1,6 @@
-const  UserService  = require( '../services/user.service.js');
+const UserService = require('./user.service.js');
 
- const UserController = {
+const UserController = {
   getAll: async (req, res) => {
     try {
       const users = await UserService.getAll();
@@ -44,6 +44,17 @@ const  UserService  = require( '../services/user.service.js');
       res.status(204).end();
     } catch (err) {
       res.status(400).json({ message: 'Error deleting user', error: err.message });
+    }
+  },
+
+  profile: async (req, res, next) => {
+    try {
+      const { userId } = req.payload;
+      const user = await UserService.getById(userId);
+      delete user.password;
+      res.json(user);
+    } catch (err) {
+      next(err);
     }
   },
 };
