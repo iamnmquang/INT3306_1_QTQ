@@ -32,6 +32,11 @@ enum PassengerType {
   INFANT
 }
 
+enum VerificationType {
+  REGISTER
+  PASSWORD_RESET
+}
+
 model Airport {
   id              Int      @id @default(autoincrement())
   name            String
@@ -59,14 +64,22 @@ model User {
   name               String
   email              String   @unique
   password           String?
-  verifyOtp          String?
-  verifyOtpExpireAt  BigInt?
+  refreshTokens      RefreshToken[]
   isAccountVerified  Boolean  @default(false)
-  resetOtp           String?
-  resetOtpExpireAt   BigInt?
   role               Role     @default(USER)
 
   tickets            Ticket[] @relation("UserTickets")
+}
+
+model RefreshToken {
+  id          String   @id @unique @default(uuid())
+  hashedToken String   @unique
+  userId      String
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revoked     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  expireAt    DateTime
 }
 
 model Passenger {
@@ -139,6 +152,8 @@ model EmailVerification {
   id         String   @id @default(uuid())
   email      String
   otp        String?
+  type       VerificationType
+  createdAt  DateTime? @default(now())
   expiresAt  DateTime?
   used       Boolean  @default(false)
 }
