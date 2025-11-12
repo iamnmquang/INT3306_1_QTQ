@@ -9,6 +9,13 @@ import Footer from './components/Footer';
 import Login from "./pages/Login";   // ✅ import trang Login
 import Register from "./pages/Register"; // ✅ import trang Register
 
+import CreateTicket from "./pages/CreateTicket";
+import Support from "./pages/Support";
+import TicketsList from "./pages/TicketsList";
+import TicketDetail from "./pages/TicketDetail";
+import Schedule from './pages/Schedule';
+import Promotions from './pages/Promotions';
+
 import "./index.css";
 
 function App() {
@@ -34,6 +41,13 @@ function App() {
         { }
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        <Route path="/support" element={<Support />} />
+        <Route path="/support/new" element={<CreateTicket />} />
+        <Route path="/support/tickets" element={<TicketsList />} />
+        <Route path="/support/tickets/:id" element={<TicketDetail />} />
+        <Route path="/schedule" element={<Schedule />} />
+        <Route path="/promotions" element={<Promotions />} />
 
       </Routes>
     </BrowserRouter>

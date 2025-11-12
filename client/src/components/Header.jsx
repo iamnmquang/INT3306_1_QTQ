@@ -28,13 +28,30 @@ export default function Header() {
         <nav className="nav">
           <button
             onClick={handleHomeClick}
-            style={{ background: "none", border: "none", cursor: "pointer" }}
+            style={{ background: "none", border: "none", cursor: "pointer", marginRight: "20px", }}
           >
             Trang chủ
           </button>
-          <a href="#schedule">Lịch bay</a>
-          <a href="#promo">Khuyến mãi</a>
-          <a href="#support">Hỗ trợ</a>
+          <button
+            onClick={() => navigate('/schedule')}
+            style={{ background: "none", border: "none", cursor: "pointer", marginRight: "20px", }}
+          >
+            Lịch bay
+          </button>
+
+          <button
+            onClick={() => navigate('/promotions')}
+            style={{ background: "none", border: "none", cursor: "pointer", marginRight: "20px", }}
+          >
+            Khuyến mãi
+          </button>
+
+          <button
+            onClick={() => navigate('/support')}
+            style={{ background: "none", border: "none", cursor: "pointer", marginRight: "20px", }}
+          >
+            Hỗ trợ
+          </button>
         </nav>
 
         <div className="auth">
