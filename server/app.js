@@ -1,13 +1,13 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-const logger = require('./utils/logger')
-const userRouter = require('./routes/user.route')
-
+const userRouter = require('./api/user/user.route')
+const authRouter = require('./api/auth/auth.router')
 const app = express()
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.use('/users', userRouter)
+app.use('/auth', authRouter)
 
 module.exports = app
