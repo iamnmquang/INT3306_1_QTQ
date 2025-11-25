@@ -1,0 +1,190 @@
+const { generateTokens, generateOTP } = require('../../utils/jwt')
+const AuthService = require('./auth.service')
+const UserService = require('../user/user.service')
+const OTPService = require('./otp.service')
+const bcrypt = require('bcrypt')
+
+
+const AuthController = {
+  register: async (req, res, next) => {
+    try {
+      const { email, password, ...rest } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: "You must provide an email and a password." });
+      }
+
+      const existingUser = await UserService.getbyEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already in use." });
+      }
+
+      //create user
+      const user = await UserService.create({
+        ...rest,
+        email,
+        password,
+      });
+
+      await OTPService.sendOTP({ email, type: 'REGISTER', name: user.name })
+
+      return res.json({
+        message: "Register successfully. Please check your email to verify account."
+      })
+
+
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  verifyRegisterEmail: async (req, res, next) => {
+    try {
+      const { email, otp } = req.body;
+
+      if (!email || !otp) {
+        return res.status(400).json({ message: "Missing email or OTP" });
+      }
+
+      await OTPService.verifyOTP({ email, type: 'REGISTER', otpInput: otp })
+     
+      
+       await UserService.updateByEmail(email, { isAccountVerified: true });
+      return res.json({ message: "Xac thuc thanh cong" });
+    } catch (err) {
+      return res.status(400).json({ message: err.message });
+    }
+  },
+
+  login: async (req, res, next) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ message: 'You must provide email or password' });
+      }
+
+      const existingUser = await UserService.getbyEmail(email);
+      if (!existingUser) {
+        return res.status(403).json({ message: 'Invalid login credentials' })
+      }
+
+      if (!existingUser.isAccountVerified) {
+        await OTPService.sendOTP({ email, type: 'REGISTER', name: existingUser.name });
+        return res.status(403).json({
+          message: 'Account not verified. Please check your email to verify your account.'
+        });
+      }
+
+      const validPassword = await bcrypt.compare(password, existingUser.password);
+      if (!validPassword) {
+        return res.status(403).json({ message: 'Invalid login credentials' });
+      }
+
+      const { accessToken, refreshToken } = generateTokens(existingUser);
+      await AuthService.addRefreshTokenToWhiteList({ refreshToken, userId: existingUser.id })
+
+      return res.json({
+        accessToken,
+        refreshToken,
+      });
+    } catch (err) {
+      next(err)
+      return res.status(400).json({ message: err.message });
+    }
+  },
+
+  //get another pairs of tokens to keep user logged
+  refreshToken: async (req, res, next) => {
+    try {
+      const { refreshToken } = req.body;
+      if (!refreshToken) {
+        return res.status(400).json({ message: 'Missing refresh token' })
+      }
+
+      const savedRefreshOToken = await AuthService.findRefreshToken(refreshToken);
+
+      if (!savedRefreshOToken
+        || savedRefreshOToken.revoked === true
+        || Date.now() >= savedRefreshOToken.expireAt.getTime()
+      ) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const user = await UserService.getById(savedRefreshOToken.userId);
+      if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      //revoked refresh token and create new pair of tokens
+      await AuthService.deleteRefreshTokenById(savedRefreshOToken.id);
+
+      const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
+      await AuthService.addRefreshTokenToWhiteList({ refreshToken: newRefreshToken, userId: user.id })
+
+      res.json({
+        accessToken,
+        refreshToken: newRefreshToken,
+      })
+
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  logout: async (req,res, next) => {
+    try {
+      const { userId } = req.payload;
+      await AuthService.revokeTokens(userId);
+      return res.json({message: "Logout successfully"})
+    } catch (err) {
+      next(err)
+    }
+  },
+
+  //send email to reset password
+  forgotPassword: async (req, res, next) => {
+    try {
+      const { email } = req.body;
+
+      const user = await UserService.getbyEmail(email);
+      if (!user) return res.status(404).json({ message: "Email is not existed." });
+
+      await OTPService.sendOTP({ email, type: 'PASSWORD_RESET', name: user.name });
+
+      return res.json({ message: "Reset password OTP is send to email." });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  verifyResetEmail: async (req, res, next) => {
+    try {
+      const { email, otp } = req.body;
+
+      await OTPService.verifyOTP({ email, type: 'PASSWORD_RESET', otpInput: otp });
+
+      return res.json({ message: "OTP is valid" });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  resetPassword: async (req, res, next) => {
+    try {
+      const { email, newPassword } = req.body;
+      
+      await UserService.updatePasswordByEmail(email,  newPassword);
+      const user = await UserService.getbyEmail(email);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      //revoke all refresh tokens of user
+       await AuthService.revokeTokens(user.id);
+
+      return res.json({ message: "Đổi mật khẩu thành công!" });
+    } catch (err) {
+      next(err);
+    }
+  }
+};
+
+module.exports = AuthController
