@@ -10,6 +10,7 @@ const airportRouter = require('./api/airport/airport.route')
 const newsRouter = require('./api/news/new.route')
 const app = express()
 
+app.use(cors())
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 

@@ -8,7 +8,7 @@ const bcrypt = require('bcrypt')
 const AuthController = {
   register: async (req, res, next) => {
     try {
-      const { email, password, ...rest } = req.body;
+      const { email, password, name } = req.body;
 
       if (!email || !password) {
         return res.status(400).json({ message: "You must provide an email and a password." });
@@ -19,19 +19,31 @@ const AuthController = {
         return res.status(400).json({ message: "Email already in use." });
       }
 
-      //create user
+      // 1. Tạo user vào Database
       const user = await UserService.create({
-        ...rest,
+        name,
         email,
         password,
       });
 
-      await OTPService.sendOTP({ email, type: 'REGISTER', name: user.name })
+      // 2. Gửi OTP (Bọc trong try/catch riêng để xử lý lỗi gửi mail)
+      try {
+        await OTPService.sendOTP({ email, type: 'REGISTER', name: user.name });
+      } catch (otpError) {
+        console.error("❌ LỖI GỬI EMAIL:", otpError.message);
+
+        // --- QUAN TRỌNG: XÓA USER VỪA TẠO ---
+        // Nếu không xóa, user này sẽ thành "rác", lần sau đăng ký lại sẽ báo trùng email
+        await UserService.delete(user.id);
+
+        return res.status(500).json({
+          message: "Lỗi gửi email xác thực. Vui lòng kiểm tra lại email hoặc thử lại sau."
+        });
+      }
 
       return res.json({
         message: "Register successfully. Please check your email to verify account."
       })
-
 
     } catch (err) {
       next(err);
@@ -47,9 +59,9 @@ const AuthController = {
       }
 
       await OTPService.verifyOTP({ email, type: 'REGISTER', otpInput: otp })
-     
-      
-       await UserService.updateByEmail(email, { isAccountVerified: true });
+
+
+      await UserService.updateByEmail(email, { isAccountVerified: true });
       return res.json({ message: "Xac thuc thanh cong" });
     } catch (err) {
       return res.status(400).json({ message: err.message });
@@ -67,6 +79,11 @@ const AuthController = {
       if (!existingUser) {
         return res.status(403).json({ message: 'Invalid login credentials' })
       }
+
+      //check if account is verified
+      // if (existingUser.isAccountVerified === false) {
+      //   return res.status(403).json({ message: "Account is not verified. Please check your email for OTP." });
+      // }
 
       if (!existingUser.isAccountVerified) {
         await OTPService.sendOTP({ email, type: 'REGISTER', name: existingUser.name });
@@ -172,13 +189,13 @@ const AuthController = {
   resetPassword: async (req, res, next) => {
     try {
       const { email, newPassword } = req.body;
-      
-      await UserService.updatePasswordByEmail(email,  newPassword);
+
+      await UserService.updatePasswordByEmail(email, newPassword);
       const user = await UserService.getbyEmail(email);
       if (!user) return res.status(404).json({ message: 'User not found' });
 
       //revoke all refresh tokens of user
-       await AuthService.revokeTokens(user.id);
+      await AuthService.revokeTokens(user.id);
 
       return res.json({ message: "Đổi mật khẩu thành công!" });
     } catch (err) {

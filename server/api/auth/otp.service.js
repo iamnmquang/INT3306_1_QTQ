@@ -1,22 +1,18 @@
 const { hashOTP } = require('../../utils/hash');
 const { generateOTP } = require('../../utils/jwt');
-const prisma = require('../../utils/prisma')
-const { sendEmail } = require('../../utils/emailService')
-const bcrypt = require('bcrypt')
+const prisma = require('../../utils/prisma');
+const { sendEmail } = require('../../utils/emailService');
+const bcrypt = require('bcrypt');
+
+const OTP_TTL_MS = 5 * 60 * 1000; // 5 phút
 
 const OTPService = {
   sendOTP: async (data) => {
     const {email, type, name, ticketNumber = null} = data
     const otp = generateOTP();
 
-    await prisma.emailVerification.create({
-      data: {
-        email,
-        otp: hashOTP(otp),
-        type,
-        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-      }
-    });
+    // 2. Hash OTP (PHẢI await)
+    const hashed = await hashOTP(otp);
 
     let subject, template;
     if (type === 'REGISTER') {
@@ -49,22 +45,32 @@ await sendEmail({
   },
 
   verifyOTP: async ({ email, type, otpInput }) => {
+
+    // 1. Lấy OTP mới nhất chưa sử dụng
     const record = await prisma.emailVerification.findFirst({
       where: { email, type, used: false },
       orderBy: { createdAt: 'desc' },
     });
 
-    if (!record) throw new Error('OTP is nonexistent or used');
-    if (new Date() > record.expiresAt) throw new Error('OTP has been expired')
+    if (!record)
+      throw new Error("OTP không tồn tại hoặc đã dùng");
 
+    // 2. Kiểm tra hết hạn
+    if (new Date() > record.expiresAt)
+      throw new Error("OTP đã hết hạn");
+
+    // 3. So sánh OTP
     const isValid = await bcrypt.compare(otpInput, record.otp);
-    if (!isValid) throw new Error('OTP is invalid')
+    if (!isValid)
+      throw new Error("OTP không đúng");
 
+    // 4. Disable OTP sau khi dùng → tránh dùng lại
     await prisma.emailVerification.update({
       where: { id: record.id },
       data: { used: true }
     });
 
+    return { ok: true, msg: "OTP hợp lệ" };
   }
 };
 

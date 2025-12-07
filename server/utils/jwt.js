@@ -21,11 +21,12 @@ const generateTokens = (user) => {
   const accessToken = generateAccessToken(user)
   const refreshToken = generateRefreshToken()
 
-  return {accessToken, refreshToken}
+  return { accessToken, refreshToken }
 }
 
 const generateOTP = () => {
   return String(crypto.randomInt(100000, 999999));
+
 }
 
 const generateBookingReference = () => {
