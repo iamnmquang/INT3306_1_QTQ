@@ -119,3 +119,23 @@
         font-size: 16px;
     }
 }
+
+/* Thêm vào file Register.css hoặc Login.css */
+
+.auth-subtitle {
+    text-align: center;
+    color: #555;
+    margin-bottom: 24px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.error-message {
+    color: #D32F2F;
+    /* Màu đỏ cho lỗi */
+    font-size: 0.875rem;
+    text-align: center;
+    margin-top: -8px;
+    /* Đặt gần input hơn */
+    margin-bottom: 12px;
+}

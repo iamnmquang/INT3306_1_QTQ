@@ -22,7 +22,7 @@ const renderTemplate = async (templateName, context = {}) => {
 }
 
 const sendEmail = async ({ to, subject, template, context }) => {
-   const html = await renderTemplate(template, context);
+  const html = await renderTemplate(template, context);
 
   const mailOptions = {
     from: `"QAirline" <${process.env.SMTP_USER}>`,
@@ -36,4 +36,4 @@ const sendEmail = async ({ to, subject, template, context }) => {
   return info;
 }
 
-module.exports = {sendEmail}
+module.exports = { sendEmail }

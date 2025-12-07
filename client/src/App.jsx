@@ -15,6 +15,8 @@ import TicketsList from "./pages/TicketsList";
 import TicketDetail from "./pages/TicketDetail";
 import Schedule from './pages/Schedule';
 import Promotions from './pages/Promotions';
+import VerifyOtp from './pages/VerifyOtp';
+import Dashboard from './pages/Dashboard';
 
 import "./index.css";
 
@@ -48,6 +50,8 @@ function App() {
         <Route path="/support/tickets/:id" element={<TicketDetail />} />
         <Route path="/schedule" element={<Schedule />} />
         <Route path="/promotions" element={<Promotions />} />
+        <Route path="/verify-register-email" element={<VerifyOtp />} />
+        <Route path="/dashboard" element={<Dashboard />} />
 
       </Routes>
     </BrowserRouter>

@@ -1,19 +1,70 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { loginUser } from "../services/apiServices";
 import "./Login.css";
 
 export default function Login() {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const navigate = useNavigate();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError(null);
+
+        if (!email.trim() || !password) {
+            setError("Vui lòng nhập email và mật khẩu.");
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const res = await loginUser({ email, password });
+
+            const accessToken = res.data?.accessToken || res.data?.token;
+            const refreshToken = res.data?.refreshToken;
+            const user = res.data?.user || null;
+
+            if (!accessToken) {
+                throw new Error("Không nhận được token từ server.");
+            }
+
+            // Lưu token + user + trạng thái đăng nhập
+            localStorage.setItem("accessToken", accessToken);
+            if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+            if (user) localStorage.setItem("user", JSON.stringify(user));
+
+            // 🔥 THÊM DÒNG NÀY
+            localStorage.setItem("isLoggedIn", "true");
+
+            // 👉 CHUYỂN VỀ TRANG CHỦ
+            navigate("/");
+        } catch (err) {
+            const message = err.response?.data?.message || err.message || "Đăng nhập thất bại.";
+            setError(message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="login-page">
             <div className="login-card" role="main" aria-labelledby="login-title">
                 <h2 id="login-title" className="login-title">Login</h2>
 
-                <form className="login-form" onSubmit={(e) => e.preventDefault()}>
+                <form className="login-form" onSubmit={handleSubmit}>
                     <label className="field-label" htmlFor="email">Email</label>
                     <input
                         id="email"
                         className="field-input"
                         type="email"
                         placeholder="Enter email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         autoComplete="email"
                         required
                     />
@@ -24,19 +75,25 @@ export default function Login() {
                         className="field-input"
                         type="password"
                         placeholder="Enter password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         autoComplete="current-password"
                         required
                     />
 
                     <div className="forgot-row">
-                        <a className="forgot-link" href="#forgot">Forget Password</a>
+                        <Link className="forgot-link" to="/forgot-password">Forget Password</Link>
                     </div>
 
-                    <button className="btn-primary" type="submit">Login</button>
+                    {error && <p className="error-message">{error}</p>}
+
+                    <button className="btn-primary" type="submit" disabled={isLoading}>
+                        {isLoading ? "Đang xử lý..." : "Login"}
+                    </button>
 
                     <div className="register-row">
                         <span>No account yet? </span>
-                        <a className="register-link" href="/register">Register</a>
+                        <Link className="register-link" to="/register">Register</Link>
                     </div>
                 </form>
             </div>
