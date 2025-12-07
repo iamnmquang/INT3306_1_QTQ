@@ -1,5 +1,5 @@
 const aircraftRouter = require('express').Router();
-const AircraftController = require('../controllers/aircraft.controller.js');
+const AircraftController = require('./aircraft.controller');
 
 aircraftRouter.get('/', AircraftController.getAll);
 aircraftRouter.get('/:id', AircraftController.getById);

@@ -4,6 +4,8 @@ const fs = require('fs').promises;
 const { compile } = require('handlebars');
 
 
+
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT) || 587,
@@ -21,19 +23,23 @@ const renderTemplate = async (templateName, context = {}) => {
   return template(context);
 }
 
-const sendEmail = async ({ to, subject, template, context }) => {
+const sendEmail = async ({ to, subject, template, context, attachments =[] }) => {
    const html = await renderTemplate(template, context);
 
   const mailOptions = {
     from: `"QAirline" <${process.env.SMTP_USER}>`,
     to,
     subject,
-    html
+    html,
+    attachments
   };
 
   const info = await transporter.sendMail(mailOptions);
   console.log(`✅ Email sent: ${info.messageId}`);
   return info;
 }
+
+
+
 
 module.exports = {sendEmail}

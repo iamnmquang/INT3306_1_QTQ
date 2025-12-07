@@ -1,4 +1,4 @@
-const AirportService = require('../../services/airport.service.js');
+const AirportService = require('./airport.service');
 
 const AirportController = {
   getAll: async (req, res) => {

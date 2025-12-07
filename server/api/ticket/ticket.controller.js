@@ -1,5 +1,5 @@
 const TicketService = require('./ticket.service.js');
-
+const OTPService = require('../auth/otp.service.js')
 const TicketController = {
   // Get all tickets
   getAll: async (req, res) => {
@@ -68,17 +68,94 @@ const TicketController = {
     }
   },
 
+  sendCancelCode: async (req, res) => {
+    try {
+      const { userId } = req.payload;
+      const { ticketNumber } = req.body;
+
+      if (!ticketNumber) {
+        return res.status(400).json({ message: 'Ticket number is required' });
+      }
+
+      // Get ticket to verify ownership
+      const ticket = await TicketService.getByTicketNumber(ticketNumber);
+      if (!ticket) {
+        return res.status(404).json({ message: 'Ticket not found' });
+      }
+
+      if (ticket.bookedById !== userId) {
+        return res.status(403).json({ message: 'You can only cancel your own tickets' });
+      }
+
+      // Send OTP to user's email
+      await OTPService.sendOTP({ 
+        email: ticket.bookedBy.email, 
+        type: 'CANCEL_TICKET', 
+        name: ticket.bookedBy.name,
+        ticketNumber: ticketNumber
+      });
+
+      return res.json({ message: 'Cancel code sent to your email' });
+    } catch (err) {
+      res.status(400).json({ message: 'Error sending cancel code', error: err.message });
+    }
+  },
+
+  verifyCancelCode: async (req, res) => {
+    try {
+      const { userId } = req.payload;
+      const { ticketNumber, cancelCode } = req.body;
+
+      if (!ticketNumber || !cancelCode) {
+        return res.status(400).json({ message: 'Ticket number and cancel code are required' });
+      }
+
+      // Get ticket to verify ownership
+      const ticket = await TicketService.getByTicketNumber(ticketNumber);
+      if (!ticket) {
+        return res.status(404).json({ message: 'Ticket not found' });
+      }
+
+      if (ticket.bookedById !== userId) {
+        return res.status(403).json({ message: 'You can only cancel your own tickets' });
+      }
+
+      // Verify OTP
+      await OTPService.verifyOTP({ 
+        email: ticket.bookedBy.email, 
+        type: 'CANCEL_TICKET', 
+        otpInput: cancelCode 
+      });
+
+      return res.json({ message: 'Cancel code verified successfully' });
+    } catch (err) {
+      return res.status(400).json({
+        message: 'Invalid or expired cancel code',
+        error: err.message,
+      });
+    }
+  },
+
   // Cancel ticket
   cancel: async (req, res) => {
     try {
-      const { cancelCode } = req.body;
-      if (!cancelCode) {
-        return res.status(400).json({ message: 'Cancel code is required' });
+      const { userId } = req.payload;
+      const { cancelCode, ticketNumber } = req.body;
+
+      if (!ticketNumber) {
+        return res.status(400).json({ message: 'Ticket number is required' });
       }
-      const ticket = await TicketService.cancel(req.params.id, cancelCode);
-      res.json(ticket);
+
+      const cancelledTicket = await TicketService.cancel(ticketNumber, userId, cancelCode);
+
+      res.json({
+        message: 'Ticket cancelled successfully',
+      });
     } catch (err) {
-      res.status(400).json({ message: 'Error cancelling ticket', error: err.message });
+      res.status(400).json({
+        message: 'Error cancelling ticket',
+        error: err.message,
+      });
     }
   },
 
@@ -91,6 +168,49 @@ const TicketController = {
       res.status(400).json({ message: 'Error deleting ticket', error: err.message });
     }
   },
+
+  confirmBookings: async (req, res) => {
+    try {
+      const { userId } = req.payload;
+      const { bookingData } = req.body;
+
+      if (!Array.isArray(bookingData) || bookingData.length === 0) {
+        return res.status(400).json({ message: 'bookingData must be a non-empty array' });
+      }
+
+      const tickets = await TicketService.confirmBookings(userId, bookingData);
+      console.log(tickets);
+
+
+      res.status(201).json({
+        message: `${tickets.length} tickets created successfully`,
+        tickets,
+      });
+    } catch (err) {
+      res.status(400).json({ message: 'Error confirming bookings', error: err.message });
+    }
+  },
+
+  sendETicket: async (req, res) => {
+    try {
+      const { bookingRef } = req.body;
+
+      if (!bookingRef) {
+        return res.status(400).json({ message: 'bookingRef must be required' });
+      }
+      const { userId } = req.payload;
+
+      const result = await TicketService.sendETicket(userId, bookingRef)
+
+      return res.status(200).json({
+        message: "E-ticket sent successfully",
+        data: result
+      });
+
+    } catch (err) {
+      res.status(400).json({ message: 'Error send tickets', error: err.message });
+    }
+  }
 };
 
 module.exports = TicketController;

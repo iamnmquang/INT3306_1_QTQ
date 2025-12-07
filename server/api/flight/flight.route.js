@@ -25,6 +25,8 @@ flightsRouter.delete('/:id',
   authorizeRole('ADMIN'),
   FlightController.delete);
 
-flightsRouter.get('/search', FlightController.searchFlights)
+flightsRouter.post('/search', FlightController.searchFlights)
+
+
 
 module.exports = flightsRouter;

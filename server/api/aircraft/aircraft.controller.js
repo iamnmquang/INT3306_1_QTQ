@@ -1,4 +1,4 @@
-const AircraftService = require('../../services/aircraft.service.js');
+const AircraftService = require('./aircraft.service');
 
 const AircraftController = {
   // Lấy danh sách toàn bộ máy bay

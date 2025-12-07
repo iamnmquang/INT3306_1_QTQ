@@ -50,14 +50,14 @@ const FlightController = {
 
   searchFlights: async (req, res) => {
     try {
-      const {departureCity, arrivalCity, departureTime} = req.body;
+      const {departureCity, arrivalCity, departureTime, passengerNum} = req.body;
 
-       if (!departureCity || !arrivalCity || !departureTime) {
+       if (!departureCity || !arrivalCity || !departureTime || !passengerNum) {
         return res.status(400).json({
-          message: 'Missing required parameters: departureCity, arrivalCity, departureTime',
+          message: 'Missing required parameters: departureCity, arrivalCity, departureTime, passengerNum',
         });
       }
-      const flights = await FlightService.searchFlights(departureCity,arrivalCity,departureTime);
+      const flights = await FlightService.searchFlights(departureCity,arrivalCity,departureTime,passengerNum);
 
         if (flights.length === 0) {
         return res.status(404).json({
@@ -68,7 +68,7 @@ const FlightController = {
     } catch (err) {
       res.status(500).json({ message: 'Error getting flight', error: err.message });
     }
-  }
+  },
 };
 
 module.exports = FlightController;

@@ -10,12 +10,13 @@ ticketRouter.get(
   TicketController.getAll
 );
 
-// Get ticket by ID
+// Get user's tickets
 ticketRouter.get(
-  '/:id',
+  '/user/my-tickets',
   isAuthenticated,
-  TicketController.getById
+  TicketController.getUserTickets
 );
+
 
 // Get ticket by booking reference
 ticketRouter.get(
@@ -24,11 +25,11 @@ ticketRouter.get(
   TicketController.getByBookingReference
 );
 
-// Get user's tickets
+// Get ticket by ID
 ticketRouter.get(
-  '/user/my-tickets',
+  '/:id',
   isAuthenticated,
-  TicketController.getUserTickets
+  TicketController.getById
 );
 
 // Create new ticket
@@ -36,6 +37,20 @@ ticketRouter.post(
   '/',
   isAuthenticated,
   TicketController.create
+);
+
+// Confirm bookings
+ticketRouter.post(
+  '/confirm-bookings',
+  isAuthenticated,
+  TicketController.confirmBookings
+);
+
+// Send e-ticket
+ticketRouter.post(
+  '/send-eticket',
+  isAuthenticated,
+  TicketController.sendETicket
 );
 
 // Update ticket (admin only)
@@ -46,9 +61,23 @@ ticketRouter.put(
   TicketController.update
 );
 
-// Cancel ticket
+// Send cancel code (step 1: send OTP to email)
 ticketRouter.post(
-  '/:id/cancel',
+  '/cancel/send-code',
+  isAuthenticated,
+  TicketController.sendCancelCode
+);
+
+// Verify cancel code (step 2: verify OTP)
+ticketRouter.post(
+  '/cancel/verify-code',
+  isAuthenticated,
+  TicketController.verifyCancelCode
+);
+
+// Cancel ticket (step 3: final cancellation)
+ticketRouter.post(
+  '/cancel',
   isAuthenticated,
   TicketController.cancel
 );

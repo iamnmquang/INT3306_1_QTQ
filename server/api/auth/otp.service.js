@@ -5,7 +5,8 @@ const { sendEmail } = require('../../utils/emailService')
 const bcrypt = require('bcrypt')
 
 const OTPService = {
-  sendOTP: async ({ email, type, name }) => {
+  sendOTP: async (data) => {
+    const {email, type, name, ticketNumber = null} = data
     const otp = generateOTP();
 
     await prisma.emailVerification.create({
@@ -24,14 +25,27 @@ const OTPService = {
     } else if (type === 'PASSWORD_RESET') {
       subject = 'Reset password QAirline';
       template = 'reset-password';
+    } else if (type == 'CANCEL_TICKET') {
+      subject = 'Cancel code for ticket QAirline'
+      template = 'cancel_ticket'
     }
 
-    await sendEmail({
-      to: email,
-      subject,
-      template,
-      context: { name, otp, expiry: "5 minutes" }
-    })
+
+const context = {
+  name,
+  otp,
+  expiry: "5 minutes",
+};
+
+if (ticketNumber) context.ticketNumber = ticketNumber;
+
+
+await sendEmail({
+  to: email,
+  subject,
+  template,
+  context
+});
   },
 
   verifyOTP: async ({ email, type, otpInput }) => {
