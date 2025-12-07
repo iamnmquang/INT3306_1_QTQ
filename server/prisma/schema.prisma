@@ -35,6 +35,7 @@ enum PassengerType {
 enum VerificationType {
   REGISTER
   PASSWORD_RESET
+  CANCEL_TICKET
 }
 
 model Airport {
@@ -89,7 +90,8 @@ model Passenger {
   dob            DateTime?
   passport       String?
   passengerType  PassengerType  @default(ADULT)
-  tickets        Ticket[]
+
+  ticket         Ticket?
 }
 
 model Flight {
@@ -97,8 +99,6 @@ model Flight {
   flightNumber        String        @unique
   departureTime       DateTime
   arrivalTime         DateTime
-  estimatedDeparture  DateTime?
-  estimatedArrival    DateTime?
   status              FlightStatus  @default(SCHEDULED)
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
@@ -125,11 +125,29 @@ model FlightSeat {
 
   flightId    String?
   flight      Flight?      @relation(fields: [flightId], references: [id])
+
+  seats       SeatDetail[]
   tickets     Ticket[]
+}
+
+model SeatDetail {
+  id          Int        @id @default(autoincrement())
+  seatNumber  String   
+  isBooked    Boolean    @default(false)
+  isLocked    Boolean    @default(false) 
+  isLockedByUserId  String?
+  lockedAt    DateTime?
+
+  flightSeatId Int
+  flightSeat   FlightSeat @relation(fields: [flightSeatId], references: [id])
+
+  ticket Ticket?
+  @@index([lockedAt]) 
 }
 
 model Ticket {
   id             String     @id @default(uuid())
+  ticketNumber     String   @unique
   bookingReference String   @unique
   seatNumber       String?
   isCancelled      Boolean  @default(false)
@@ -140,11 +158,13 @@ model Ticket {
   flightId         String?
   bookedById       String?
   flightSeatId     Int?
-  passengerId      String?
+  seatDetailId     Int?    @unique 
+  passengerId      String? @unique 
 
   flight           Flight?     @relation(fields: [flightId], references: [id])
   bookedBy         User?       @relation("UserTickets", fields: [bookedById], references: [id])
   flightSeat       FlightSeat? @relation(fields: [flightSeatId], references: [id])
+  seatDetail       SeatDetail? @relation(fields: [seatDetailId], references: [id])
   passenger        Passenger?  @relation(fields: [passengerId], references: [id])
 }
 

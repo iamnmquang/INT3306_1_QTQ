@@ -1,6 +1,6 @@
 const authRouter = require('express').Router()
 const AuthController = require('./auth.controller')
-const {sAuthenticated, isAuthenticated} = require('../../utils/middlewares')
+const {isAuthenticated} = require('../../utils/middlewares')
 
 authRouter.post('/register', AuthController.register)
 authRouter.post('/verify-register-email', AuthController.verifyRegisterEmail)
