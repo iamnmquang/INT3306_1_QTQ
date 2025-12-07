@@ -38,6 +38,95 @@ async function main() {
     airports.push(airport);
   }
   console.log(`✅ Seeded ${airports.length} airports.`);
+
+
+  const aircraftData = [
+    { name: "Airbus A321", manufacturer: "Airbus" },
+    { name: "Boeing 787", manufacturer: "Boeing" }
+  ];
+
+  const aircrafts = [];
+  for (const ac of aircraftData) {
+    const created = await prisma.aircraft.create({
+      data: ac
+    });
+    aircrafts.push(created);
+  }
+
+
+   const flight = await prisma.flight.create({
+    data: {
+      flightNumber: "VN123",
+      departureTime: new Date("2025-02-01T08:00:00.000Z"),
+      arrivalTime: new Date("2025-02-01T10:00:00.000Z"),
+      arrivalAirportId: airports[0].id,   // HAN
+      departureAirportId: airports[1].id, // SGN
+      aircraftId: aircrafts[0].id         // Airbus A321
+    },
+  });
+
+  console.log("✔ Seeded flight:", flight.flightNumber);
+
+  const flightSeatsData = [
+    { seatClass: "ECONOMY", totalSeats: 120, bookedSeats: 0, price: 100.0 },
+    { seatClass: "BUSINESS", totalSeats: 40, bookedSeats: 0, price: 300.0 }
+  ];
+
+  const flightSeats = [];
+
+  for (const fs of flightSeatsData) {
+    const created = await prisma.flightSeat.create({
+      data: {
+        seatClass: fs.seatClass,
+        totalSeats: fs.totalSeats,
+        bookedSeats: 0,
+        price: fs.price,
+        flightId: flight.id,
+      }
+    });
+
+    flightSeats.push(created);
+  }
+
+  console.log(`✔ Seeded ${flightSeats.length} flight seat groups.`);
+
+  const seatLetters = ["A", "B", "C", "D", "E", "F"];
+  let totalSeatsInserted = 0;
+
+  // ECONOMY: 120 seats = 20 rows × 6 seats
+  // BUSINESS: 40 seats = ~7 rows × 6 seats
+  const seatStructure = {
+    ECONOMY: { rows: 20, cols: 6 },
+    BUSINESS: { rows: 7, cols: 6 },
+  };
+
+  for (const fs of flightSeats) {
+    const structure = seatStructure[fs.seatClass];
+    const seats = [];
+
+    for (let row = 1; row <= structure.rows; row++) {
+      for (let col = 0; col < structure.cols; col++) {
+        const seatNumber = `${row}${seatLetters[col]}`;
+        seats.push({
+          seatNumber,
+          isBooked: false,
+          isLocked: false,
+          flightSeatId: fs.id,
+        });
+      }
+    }
+
+    await prisma.seatDetail.createMany({
+      data: seats,
+    });
+
+    totalSeatsInserted += seats.length;
+  }
+
+  console.log(`✔ Seeded ${totalSeatsInserted} seat details.`);
+
+
+  console.log("🌱 Seeding completed successfully!");
 }
 
 main()

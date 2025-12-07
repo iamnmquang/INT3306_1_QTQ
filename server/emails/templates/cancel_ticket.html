@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mã hủy vé | QAirline</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 600px;
+        background-color: #ffffff;
+        margin: 30px auto;
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+      }
+      h2 {
+        color: #e53935;
+        font-size: 22px;
+        margin-bottom: 10px;
+      }
+      p {
+        color: #333;
+        line-height: 1.6;
+        font-size: 15px;
+      }
+      .otp-box {
+        background-color: #ffebee;
+        border: 1px solid #ef9a9a;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 28px;
+        font-weight: bold;
+        color: #c62828;
+        letter-spacing: 3px;
+        padding: 15px;
+        margin: 20px 0;
+      }
+      .footer {
+        font-size: 13px;
+        color: #777;
+        margin-top: 30px;
+        text-align: center;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Xin chào {{name}},</h2>
+
+      <p>
+        Bạn đã yêu cầu <strong>hủy vé máy bay</strong> thuộc mã vé máy bay
+        <strong>{{ticketNumber}}</strong>.
+      </p>
+
+      <p>Mã xác nhận hủy vé của bạn là:</p>
+      <div class="otp-box">{{otp}}</div>
+
+      <p>Mã này sẽ hết hạn sau <strong>{{expiry}}</strong>.</p>
+
+      <p>
+        Nếu bạn không yêu cầu hủy vé, hãy bỏ qua email này và vé của bạn sẽ
+        không bị thay đổi.
+      </p>
+
+      <div class="footer">
+        <p>Trân trọng,<br />Đội ngũ QAirline</p>
+      </div>
+    </div>
+  </body>
+</html>
