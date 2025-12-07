@@ -24,7 +24,7 @@ const OTPService = {
         data: {
           email,
           otp: hashed,
-          type, // ⚠️ ĐÃ SỬA → không còn hardcode REGISTER
+          type, // 
           expiresAt,
         }
       });
