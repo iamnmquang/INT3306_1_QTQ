@@ -7,7 +7,7 @@ const generateAccessToken = (user) => {
     userId: user.id,
     role: user.role,
   }, process.env.JWT_ACCESS_SECRET, {
-    expiresIn: '5m',
+    expiresIn: '1d',
   });
 }
 
@@ -29,11 +29,23 @@ const generateOTP = () => {
 
 }
 
+const generateBookingReference = () => {
+  return crypto.randomBytes(6).toString('base64url')
+}
+
+const generateTicketNumber = (flightNumber) => {
+  const randomDigits = crypto.randomInt(10000000, 99999999)
+  const ticketNumber = `${flightNumber}-${randomDigits}`;
+  return ticketNumber
+}
+
 module.exports = {
   generateAccessToken,
   generateRefreshToken,
   generateTokens,
-  generateOTP
+  generateOTP,
+  generateBookingReference,
+  generateTicketNumber
 };
 
 

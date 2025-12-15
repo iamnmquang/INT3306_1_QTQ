@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>E-Ticket Confirmation</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background-color: #f6f7f9;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 650px;
+        background-color: #ffffff;
+        margin: 30px auto;
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+      h2 {
+        color: #1565c0;
+        margin-bottom: 16px;
+        font-size: 22px;
+      }
+      p {
+        color: #333;
+        font-size: 15px;
+        line-height: 1.6;
+      }
+      .info-box {
+        background-color: #e3f2fd;
+        border: 1px solid #90caf9;
+        padding: 18px 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+      }
+      .info-item {
+        font-size: 15px;
+        margin-bottom: 6px;
+      }
+      .btn {
+        display: inline-block;
+        background-color: #1565c0;
+        color: #ffffff !important;
+        text-decoration: none;
+        padding: 12px 20px;
+        font-size: 16px;
+        border-radius: 8px;
+        margin-top: 10px;
+      }
+      .footer {
+        text-align: center;
+        margin-top: 30px;
+        font-size: 13px;
+        color: #777;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h2>Xin chào {{name}},</h2>
+
+      <p>
+        Cảm ơn bạn đã đặt vé tại <strong>QAirline</strong>.  
+        Chúng tôi xin gửi đến bạn vé điện tử (E-Ticket) được đính kèm trong email này.
+      </p>
+
+      <div class="info-box">
+        <div class="info-item"><strong>📌 Mã đặt chỗ (PNR):</strong> {{bookingRef}}</div>
+        <div class="info-item"><strong>🎫 Số lượng vé:</strong> {{totalTickets}} vé</div>
+      </div>
+
+      <p>
+        Vui lòng mở file PDF được đính kèm để xem đầy đủ thông tin chuyến bay và hành khách.
+      </p>
+
+      <p>
+        Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ đội ngũ hỗ trợ của chúng tôi.
+      </p>
+
+      <div class="footer">
+        <p>Trân trọng,<br />Đội ngũ QAirline</p>
+      </div>
+    </div>
+  </body>
+</html>

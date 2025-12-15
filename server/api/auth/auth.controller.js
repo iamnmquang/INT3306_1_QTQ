@@ -148,6 +148,16 @@ const AuthController = {
     }
   },
 
+  logout: async (req,res, next) => {
+    try {
+      const { userId } = req.payload;
+      await AuthService.revokeTokens(userId);
+      return res.json({message: "Logout successfully"})
+    } catch (err) {
+      next(err)
+    }
+  },
+
   //send email to reset password
   forgotPassword: async (req, res, next) => {
     try {
