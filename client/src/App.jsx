@@ -16,7 +16,8 @@ import TicketDetail from "./pages/TicketDetail";
 import Schedule from './pages/Schedule';
 import Promotions from './pages/Promotions';
 import VerifyOtp from './pages/VerifyOtp';
-import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
+
 
 import "./index.css";
 
@@ -51,7 +52,8 @@ function App() {
         <Route path="/schedule" element={<Schedule />} />
         <Route path="/promotions" element={<Promotions />} />
         <Route path="/verify-register-email" element={<VerifyOtp />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
+
 
       </Routes>
     </BrowserRouter>
