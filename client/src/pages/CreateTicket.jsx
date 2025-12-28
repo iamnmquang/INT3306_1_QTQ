@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./CreateTicket.css";
+import "../styles/CreateTicket.css";
 
 const CATEGORIES = ["Billing", "Technical", "Account", "Other"];
 const PRIORITIES = ["Low", "Medium", "High", "Urgent"];

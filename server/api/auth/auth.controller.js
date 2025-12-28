@@ -148,11 +148,11 @@ const AuthController = {
     }
   },
 
-  logout: async (req,res, next) => {
+  logout: async (req, res, next) => {
     try {
       const { userId } = req.payload;
       await AuthService.revokeTokens(userId);
-      return res.json({message: "Logout successfully"})
+      return res.json({ message: "Logout successfully" })
     } catch (err) {
       next(err)
     }
@@ -203,5 +203,6 @@ const AuthController = {
     }
   }
 };
+
 
 module.exports = AuthController

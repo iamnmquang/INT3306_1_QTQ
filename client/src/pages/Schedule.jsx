@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import "./Schedule.css";
+import "../styles/Schedule.css";
 import { Link } from "react-router-dom";
 
 /* Demo dữ liệu - thay bằng fetch từ API khi cần */

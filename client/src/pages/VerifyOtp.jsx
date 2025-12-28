@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { verifyOtp } from "../services/apiServices";
 
 // Styles
-import "./Register.css";
+import "../styles/Register.css";
 
 export default function VerifyOtp() {
     const [otp, setOtp] = useState("");

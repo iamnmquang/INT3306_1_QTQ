@@ -20,7 +20,10 @@ export default function Header() {
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("user");
-    navigate("/"); // trở lại trang chủ
+
+    window.dispatchEvent(new Event("userLogout"));
+
+    navigate("/");
   };
 
   return (
@@ -30,10 +33,10 @@ export default function Header() {
         <div className="logo">QTQAirline</div>
 
         <nav className="nav">
-          <button onClick={handleHomeClick} style={{ background: "none", border: "none", cursor: "pointer", marginRight: "20px", }}>Trang chủ</button>
-          <button onClick={() => navigate("/schedule")} style={{ background: "none", border: "none", cursor: "pointer", marginRight: "20px", }}>Lịch bay</button>
-          <button onClick={() => navigate("/promotions")} style={{ background: "none", border: "none", cursor: "pointer", marginRight: "20px", }}>Khuyến mãi</button>
-          <button onClick={() => navigate("/support")} style={{ background: "none", border: "none", cursor: "pointer", marginRight: "20px", }}>Hỗ trợ</button>
+          <button onClick={handleHomeClick} style={navBtnStyle}>Trang chủ</button>
+          <button onClick={() => navigate("/schedule")} style={navBtnStyle}>Lịch bay</button>
+          <button onClick={() => navigate("/promotions")} style={navBtnStyle}>Khuyến mãi</button>
+          <button onClick={() => navigate("/support")} style={navBtnStyle}>Hỗ trợ</button>
         </nav>
 
         <div className="auth">
@@ -49,15 +52,37 @@ export default function Header() {
                 alt="avatar"
                 style={{ width: "40px", height: "40px", borderRadius: "50%" }}
               />
+
               <span style={{ fontWeight: "bold" }}>{user?.name || "User"}</span>
 
-              <button className="btn btn-outline" onClick={() => navigate("/profile")}>Profile</button>
+              {/* 🔥 NÚT CHAT MỚI */}
+              <button
+                className="btn btn-outline"
+                onClick={() => navigate("/support-chat")}
+                title="Chat với hỗ trợ"
+              >
+                💬 Chat
+              </button>
 
-              <button className="btn btn-outline" onClick={handleLogout}>Đăng xuất</button>
+              <button className="btn btn-outline" onClick={() => navigate("/profile")}>
+                Profile
+              </button>
+
+              <button className="btn btn-outline" onClick={handleLogout}>
+                Đăng xuất
+              </button>
             </div>
           )}
         </div>
+
       </div>
     </header>
   );
 }
+
+const navBtnStyle = {
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  marginRight: "20px",
+};

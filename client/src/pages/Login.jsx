@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../services/apiServices";
-import "./Login.css";
+import "../styles/Login.css";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -25,9 +25,19 @@ export default function Login() {
         try {
             const res = await loginUser({ email, password });
 
+            console.log("LOGIN RESPONSE:", res.data);
+            console.log("USER FROM API:", res.data.user);
+
+
             const accessToken = res.data?.accessToken || res.data?.token;
             const refreshToken = res.data?.refreshToken;
-            const user = res.data?.user || null;
+            const user =
+                res.data?.user ||
+                {
+                    id: email,        // tạm dùng email làm id
+                    email: email,
+                };
+
 
             if (!accessToken) {
                 throw new Error("Không nhận được token từ server.");
@@ -41,6 +51,9 @@ export default function Login() {
             // 🔥 THÊM DÒNG NÀY
             localStorage.setItem("isLoggedIn", "true");
 
+            // 🔥 Emit sự kiện để App cập nhật user trong cùng tab
+            window.dispatchEvent(new Event("userLogin"));
+
             // 👉 CHUYỂN VỀ TRANG CHỦ
             navigate("/");
         } catch (err) {
@@ -49,6 +62,9 @@ export default function Login() {
         } finally {
             setIsLoading(false);
         }
+
+
+
     };
 
     return (

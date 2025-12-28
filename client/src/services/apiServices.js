@@ -44,6 +44,8 @@ export const logoutUser = (token) => {
     return api.post('/auth/logout', { refreshToken: token });
 };
 
+
+
 // Cấu hình Interceptor (Tùy chọn nâng cao)
 // Bạn có thể mở comment phần dưới nếu muốn tự động đính kèm Token vào mỗi request
 /*

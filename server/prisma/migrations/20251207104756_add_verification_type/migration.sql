@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `emailverification` MODIFY `type` ENUM('REGISTER', 'PASSWORD_RESET', 'CANCEL_TICKET') NOT NULL;
