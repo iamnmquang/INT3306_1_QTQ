@@ -12,6 +12,8 @@ authRouter.post('/logout', isAuthenticated, AuthController.logout)
 authRouter.post('/forgot-password', AuthController.forgotPassword)
 authRouter.post('/verify-reset-email', AuthController.verifyResetEmail)
 authRouter.post('/reset-password', AuthController.resetPassword)
+authRouter.post("/resend-otp", AuthController.resendRegisterOTP);
+
 
 
 

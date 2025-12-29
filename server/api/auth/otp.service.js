@@ -5,21 +5,33 @@ const { sendEmail } = require('../../utils/emailService');
 const bcrypt = require('bcrypt');
 
 const OTP_TTL_MS = 5 * 60 * 1000; // 5 phút
+const RESEND_COOLDOWN_MS = 60 * 1000; // 60 giây, có thể điều chỉnh hoặc bỏ
 
 const OTPService = {
   sendOTP: async (data) => {
     const { email, type, name, ticketNumber = null } = data;
 
-    const otp = generateOTP();
-    const hashed = await hashOTP(otp);
-    const expiresAt = new Date(Date.now() + OTP_TTL_MS);
+    // 🔹 Lấy OTP mới nhất (chưa dùng)
+    const latestOTP = await prisma.emailVerification.findFirst({
+      where: { email, type, used: false },
+      orderBy: { createdAt: 'desc' },
+    });
 
-    // 🔥 FIX 1: Xoá OTP cũ
+    // 🔹 Nếu muốn cooldown, bật dòng dưới
+    if (latestOTP && Date.now() - latestOTP.createdAt.getTime() < RESEND_COOLDOWN_MS) {
+      throw new Error("Vui lòng đợi trước khi gửi lại OTP");
+    }
+
+    // 🔹 Xoá OTP cũ
     await prisma.emailVerification.deleteMany({
       where: { email, type }
     });
 
-    // Lưu OTP
+    // 🔹 Tạo OTP mới
+    const otp = generateOTP();
+    const hashed = await hashOTP(otp);
+    const expiresAt = new Date(Date.now() + OTP_TTL_MS);
+
     await prisma.emailVerification.create({
       data: {
         email,
@@ -29,6 +41,7 @@ const OTPService = {
       }
     });
 
+    // 🔹 Chọn subject + template
     let subject, template;
     if (type === 'REGISTER') {
       subject = 'Verify account QAirline';
@@ -46,17 +59,18 @@ const OTPService = {
     const context = { name, otp, expiry: '5 minutes' };
     if (ticketNumber) context.ticketNumber = ticketNumber;
 
-    // 🔥 FIX 2: log lỗi mail
+    // 🔹 Gửi mail
     try {
       await sendEmail({ to: email, subject, template, context });
     } catch (err) {
       console.error("❌ EMAIL ERROR:", err);
       throw new Error("Không gửi được email OTP");
     }
+
+    return { message: "OTP mới đã được gửi đến email của bạn" };
   },
 
   verifyOTP: async ({ email, type, otpInput }) => {
-    // 1. Lấy OTP mới nhất chưa dùng
     const record = await prisma.emailVerification.findFirst({
       where: { email, type, used: false },
       orderBy: { createdAt: 'desc' },
@@ -65,16 +79,13 @@ const OTPService = {
     if (!record)
       throw new Error("OTP không tồn tại hoặc đã dùng");
 
-    // 2. Kiểm tra hết hạn
     if (new Date() > record.expiresAt)
       throw new Error("OTP đã hết hạn");
 
-    // 3. So sánh OTP
     const isValid = await bcrypt.compare(otpInput, record.otp);
     if (!isValid)
       throw new Error("OTP không đúng");
 
-    // 4. Đánh dấu OTP đã dùng
     await prisma.emailVerification.update({
       where: { id: record.id },
       data: { used: true }

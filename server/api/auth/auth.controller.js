@@ -209,8 +209,36 @@ const AuthController = {
     } catch (err) {
       next(err);
     }
+  },
+
+  resendRegisterOTP: async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!email)
+        return res.status(400).json({ message: "Missing email" });
+
+      const user = await UserService.getbyEmail(email);
+      if (!user)
+        return res.status(404).json({ message: "User not found" });
+
+      if (user.isAccountVerified)
+        return res.status(400).json({ message: "Account already verified" });
+
+      await OTPService.sendOTP({
+        email,
+        type: "REGISTER",
+        name: user.name
+      });
+
+      return res.json({ message: "OTP đã được gửi lại" });
+    } catch (err) {
+      console.error("RESEND OTP ERROR:", err);
+      return res.status(500).json({ message: "Không thể gửi lại OTP" });
+    }
   }
 };
+
 
 
 module.exports = AuthController

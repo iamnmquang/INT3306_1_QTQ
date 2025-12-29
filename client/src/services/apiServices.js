@@ -52,6 +52,11 @@ export const verifyForgotOtp = (data) =>
 
 export const resetPassword = (data) =>
     api.post("/auth/reset-password", data);
+export const resendOtp = (data) => {
+    // data = { email }
+    return api.post("/auth/resend-otp", data);
+};
+
 
 
 

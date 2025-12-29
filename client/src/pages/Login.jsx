@@ -25,8 +25,6 @@ export default function Login() {
         try {
             const res = await loginUser({ email, password });
 
-            console.log("LOGIN RESPONSE:", res.data);
-
             const accessToken = res.data?.accessToken || res.data?.token;
             const user = res.data?.user;
 
@@ -40,16 +38,30 @@ export default function Login() {
 
             window.dispatchEvent(new Event("userLogin"));
             navigate("/");
+
         } catch (err) {
             const message =
                 err.response?.data?.message ||
                 err.message ||
                 "Đăng nhập thất bại.";
-            setError(message);
+
+            // ✅ Nếu account chưa verify
+            if (message.includes("Account not verified")) {
+                const confirmVerify = window.confirm(
+                    "Tài khoản của bạn chưa được xác thực. Bạn có muốn xác thực ngay bây giờ?"
+                );
+                if (confirmVerify) {
+                    // Chuyển hướng sang VerifyOtp.jsx và gửi email để verify
+                    navigate("/verify-register-email", { state: { email } });
+                }
+            } else {
+                setError(message);
+            }
         } finally {
             setIsLoading(false);
         }
     };
+
 
 
     return (
