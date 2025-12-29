@@ -1,7 +1,6 @@
 // src/pages/Promotions.jsx
 import React from "react";
-import "./Promotions.css";
-import "./Register.css";
+import "../styles/Promotions.css";
 
 const promotions = [
     {

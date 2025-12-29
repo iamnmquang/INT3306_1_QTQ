@@ -98,12 +98,20 @@ const AuthController = {
       }
 
       const { accessToken, refreshToken } = generateTokens(existingUser);
-      await AuthService.addRefreshTokenToWhiteList({ refreshToken, userId: existingUser.id })
+      await AuthService.addRefreshTokenToWhiteList({
+        refreshToken,
+        userId: existingUser.id
+      });
+
+      // ❌ KHÔNG gửi password về client
+      const { password: _, ...safeUser } = existingUser;
 
       return res.json({
         accessToken,
         refreshToken,
+        user: safeUser,   // ⭐⭐⭐ QUAN TRỌNG
       });
+
     } catch (err) {
       next(err)
       return res.status(400).json({ message: err.message });
@@ -148,11 +156,11 @@ const AuthController = {
     }
   },
 
-  logout: async (req,res, next) => {
+  logout: async (req, res, next) => {
     try {
       const { userId } = req.payload;
       await AuthService.revokeTokens(userId);
-      return res.json({message: "Logout successfully"})
+      return res.json({ message: "Logout successfully" })
     } catch (err) {
       next(err)
     }
@@ -203,5 +211,6 @@ const AuthController = {
     }
   }
 };
+
 
 module.exports = AuthController

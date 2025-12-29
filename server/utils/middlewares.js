@@ -1,37 +1,46 @@
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 
-//check token is valid
+// check token is valid
 function isAuthenticated(req, res, next) {
-  const {authorization} = req.headers;
+  const { authorization } = req.headers;
 
-  if(!authorization) {
-    return res.status(401).json({message: 'Un-Authorized'});
+  if (!authorization) {
+    return res.status(401).json({ message: 'Un-Authorized' });
   }
 
-  try{
+  try {
     const token = authorization.split(' ')[1];
     const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+
+    // 🔥 QUAN TRỌNG: map userId → id
+    req.user = {
+      id: payload.id || payload.userId,
+      role: payload.role,
+      email: payload.email,
+    };
+
+    // giữ lại để tương thích code cũ
     req.payload = payload;
-    
-    
-  }catch(err){
-    if(err.name === 'TokenExpiredError') {
-      throw new Error(err.name)
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'TokenExpired' });
     }
-    throw new Error('Un-Authorized');
+    return res.status(401).json({ message: 'Un-Authorized' });
   }
 
   return next();
 }
 
-function authorizeRole(...allowedRole){
+
+function authorizeRole(...allowedRole) {
   return (req, res, next) => {
-    if(!req.payload){
-      return res.status(401).json({ message: 'Unauthorized: missing user info' }); 
+    const payload = req.payload || req.user;
+    if (!payload) {
+      return res.status(401).json({ message: 'Unauthorized: missing user info' });
     }
-    const {role} = req.payload
-    if(!allowedRole.includes(role)) {
-      return res.status(403).json({message: 'Access denied: insufficient permissions'})
+    const { role } = payload;
+    if (!allowedRole.includes(role)) {
+      return res.status(403).json({ message: 'Access denied: insufficient permissions' })
     }
 
     next();

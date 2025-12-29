@@ -39,18 +39,18 @@ enum VerificationType {
 }
 
 model Airport {
-  id              Int      @id @default(autoincrement())
-  name            String
-  iataCode        String   @unique
-  icaoCode        String   @unique
-  country         String?
-  city            String?
-  latitude        Float?
-  longitude       Float?
-  type            String?
+  id        Int     @id @default(autoincrement())
+  name      String
+  iataCode  String  @unique
+  icaoCode  String  @unique
+  country   String?
+  city      String?
+  latitude  Float?
+  longitude Float?
+  type      String?
 
-  arrivals        Flight[] @relation("ArrivalFlights")
-  departures      Flight[] @relation("DepartureFlights")
+  arrivals   Flight[] @relation("ArrivalFlights")
+  departures Flight[] @relation("DepartureFlights")
 }
 
 model Aircraft {
@@ -61,15 +61,23 @@ model Aircraft {
 }
 
 model User {
-  id                 String   @id @default(uuid())
-  name               String
-  email              String   @unique
-  password           String
-  refreshTokens      RefreshToken[]
-  isAccountVerified  Boolean  @default(false)
-  role               Role     @default(USER)
+  id                String         @id @default(uuid())
+  name              String
+  email             String         @unique
+  password          String
+  refreshTokens     RefreshToken[]
+  isAccountVerified Boolean        @default(false)
+  role              Role           @default(USER)
 
-  tickets            Ticket[] @relation("UserTickets")
+  avatarUrl         String?
+  phone             String?
+  address           String?
+
+  tickets Ticket[] @relation("UserTickets")
+
+  chatRooms    ChatRoom[]
+  chatMessages ChatMessage[]
+
 }
 
 model RefreshToken {
@@ -84,69 +92,70 @@ model RefreshToken {
 }
 
 model Passenger {
-  id             String         @id @default(uuid())
-  fullName       String
-  email          String?
-  dob            DateTime?
-  passport       String?
-  passengerType  PassengerType  @default(ADULT)
+  id            String        @id @default(uuid())
+  fullName      String
+  email         String?
+  dob           DateTime?
+  passport      String?
+  passengerType PassengerType @default(ADULT)
 
-  ticket         Ticket?
+  ticket Ticket?
 }
 
 model Flight {
-  id                  String        @id @default(uuid())
-  flightNumber        String        @unique
-  departureTime       DateTime
-  arrivalTime         DateTime
-  status              FlightStatus  @default(SCHEDULED)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  id            String       @id @default(uuid())
+  flightNumber  String       @unique
+  departureTime DateTime
+  arrivalTime   DateTime
+  status        FlightStatus @default(SCHEDULED)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  arrivalAirportId    Int?
-  departureAirportId  Int?
-  aircraftId          String?
+  arrivalAirportId   Int?
+  departureAirportId Int?
+  aircraftId         String?
 
-  arrivalAirport      Airport? @relation("ArrivalFlights", fields: [arrivalAirportId], references: [id])
-  departureAirport    Airport? @relation("DepartureFlights", fields: [departureAirportId], references: [id])
-  aircraft            Aircraft? @relation(fields: [aircraftId], references: [id])
+  arrivalAirport   Airport?  @relation("ArrivalFlights", fields: [arrivalAirportId], references: [id])
+  departureAirport Airport?  @relation("DepartureFlights", fields: [departureAirportId], references: [id])
+  aircraft         Aircraft? @relation(fields: [aircraftId], references: [id])
 
-  flightSeats         FlightSeat[]
-  tickets             Ticket[]
-}
-
-model FlightSeat {
-  id          Int         @id @default(autoincrement())
-  seatClass   SeatClass    @default(ECONOMY)
-  totalSeats  Int
-  bookedSeats Int
-  price       Float
-  createdAt   DateTime     @default(now())
-
-  flightId    String?
-  flight      Flight?      @relation(fields: [flightId], references: [id])
-
-  seats       SeatDetail[]
+  flightSeats FlightSeat[]
   tickets     Ticket[]
 }
 
+model FlightSeat {
+  id          Int       @id @default(autoincrement())
+  seatClass   SeatClass @default(ECONOMY)
+  totalSeats  Int
+  bookedSeats Int
+  price       Float
+  createdAt   DateTime  @default(now())
+
+  flightId String?
+  flight   Flight? @relation(fields: [flightId], references: [id])
+
+  seats   SeatDetail[]
+  tickets Ticket[]
+}
+
 model SeatDetail {
-  id          Int        @id @default(autoincrement())
-  seatNumber  String   
-  isBooked    Boolean    @default(false)
-  isLocked    Boolean    @default(false) 
-  isLockedByUserId  String?
-  lockedAt    DateTime?
+  id               Int       @id @default(autoincrement())
+  seatNumber       String
+  isBooked         Boolean   @default(false)
+  isLocked         Boolean   @default(false)
+  isLockedByUserId String?
+  lockedAt         DateTime?
 
   flightSeatId Int
   flightSeat   FlightSeat @relation(fields: [flightSeatId], references: [id])
 
   ticket Ticket?
-  @@index([lockedAt]) 
+
+  @@index([lockedAt])
 }
 
 model Ticket {
-  id             String     @id @default(uuid())
+  id               String   @id @default(uuid())
   ticketNumber     String   @unique
   bookingReference String   @unique
   seatNumber       String?
@@ -155,35 +164,68 @@ model Ticket {
   bookedAt         DateTime @default(now())
   cancelCode       String?
 
-  flightId         String?
-  bookedById       String?
-  flightSeatId     Int?
-  seatDetailId     Int?    @unique 
-  passengerId      String? @unique 
+  flightId     String?
+  bookedById   String?
+  flightSeatId Int?
+  seatDetailId Int?    @unique
+  passengerId  String? @unique
 
-  flight           Flight?     @relation(fields: [flightId], references: [id])
-  bookedBy         User?       @relation("UserTickets", fields: [bookedById], references: [id])
-  flightSeat       FlightSeat? @relation(fields: [flightSeatId], references: [id])
-  seatDetail       SeatDetail? @relation(fields: [seatDetailId], references: [id])
-  passenger        Passenger?  @relation(fields: [passengerId], references: [id])
+  flight     Flight?     @relation(fields: [flightId], references: [id])
+  bookedBy   User?       @relation("UserTickets", fields: [bookedById], references: [id])
+  flightSeat FlightSeat? @relation(fields: [flightSeatId], references: [id])
+  seatDetail SeatDetail? @relation(fields: [seatDetailId], references: [id])
+  passenger  Passenger?  @relation(fields: [passengerId], references: [id])
 }
 
 model EmailVerification {
-  id         String   @id @default(uuid())
-  email      String
-  otp        String?
-  type       VerificationType @default(REGISTER)
-  createdAt  DateTime? @default(now())
-  expiresAt  DateTime?
-  used       Boolean  @default(false)
+  id        String           @id @default(uuid())
+  email     String
+  otp       String?
+  type      VerificationType @default(REGISTER)
+  createdAt DateTime?        @default(now())
+  expiresAt DateTime?
+  used      Boolean          @default(false)
 }
 
 model News {
-  id          Int       @id @default(autoincrement())
-  title       String
-  content     String?
+  id           Int      @id @default(autoincrement())
+  title        String
+  content      String?
   thumbnailUrl String?
-  isPublished Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isPublished  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
+
+model ChatRoom {
+  id        String       @id @default(uuid())
+  userId    String
+  createdAt DateTime     @default(now())
+
+  user     User         @relation(fields: [userId], references: [id])
+  messages ChatMessage[]
+
+  @@index([userId])
+}
+
+model ChatMessage {
+  id          String   @id @default(uuid())
+  roomId      String
+  senderId    String
+  senderRole  Role
+  content     String
+  isRead      Boolean  @default(false)
+  attachments Json?
+  createdAt   DateTime @default(now())
+
+  room   ChatRoom @relation(fields: [roomId], references: [id])
+  sender User     @relation(fields: [senderId], references: [id])
+
+  @@index([roomId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+
+
+

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import "./Support.css";
+import "../styles/Support.css";
 
 /**
  * Demo data - thay bằng API thực tế khi cần

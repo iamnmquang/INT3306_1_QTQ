@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../services/apiServices";
-import "./Login.css";
+import "../styles/Login.css";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -25,31 +25,32 @@ export default function Login() {
         try {
             const res = await loginUser({ email, password });
 
-            const accessToken = res.data?.accessToken || res.data?.token;
-            const refreshToken = res.data?.refreshToken;
-            const user = res.data?.user || null;
+            console.log("LOGIN RESPONSE:", res.data);
 
-            if (!accessToken) {
-                throw new Error("Không nhận được token từ server.");
+            const accessToken = res.data?.accessToken || res.data?.token;
+            const user = res.data?.user;
+
+            if (!accessToken || !user) {
+                throw new Error("Server không trả đủ dữ liệu đăng nhập.");
             }
 
-            // Lưu token + user + trạng thái đăng nhập
             localStorage.setItem("accessToken", accessToken);
-            if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
-            if (user) localStorage.setItem("user", JSON.stringify(user));
-
-            // 🔥 THÊM DÒNG NÀY
+            localStorage.setItem("user", JSON.stringify(user));
             localStorage.setItem("isLoggedIn", "true");
 
-            // 👉 CHUYỂN VỀ TRANG CHỦ
+            window.dispatchEvent(new Event("userLogin"));
             navigate("/");
         } catch (err) {
-            const message = err.response?.data?.message || err.message || "Đăng nhập thất bại.";
+            const message =
+                err.response?.data?.message ||
+                err.message ||
+                "Đăng nhập thất bại.";
             setError(message);
         } finally {
             setIsLoading(false);
         }
     };
+
 
     return (
         <div className="login-page">

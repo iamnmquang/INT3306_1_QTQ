@@ -69,6 +69,27 @@ const FlightController = {
       res.status(500).json({ message: 'Error getting flight', error: err.message });
     }
   },
+
+  getUnreadCount: async (req, res) => {
+  try {
+    const { roomId } = req.params
+    const count = await ChatService.getUnreadCountByRoom(roomId, req.user.id)
+    res.json({ unread: count })
+  } catch (err) {
+    res.status(500).json({ message: 'Error getting unread count' })
+  }
+}, 
+
+getUnreadForAdmin: async (req, res) => {
+  try {
+    const data = await ChatService.getUnreadCountsForAdmin()
+    res.json(data)
+  } catch (err) {
+    res.status(500).json({ message: 'Error getting unread counts' })
+  }
+}
+
+
 };
 
 module.exports = FlightController;

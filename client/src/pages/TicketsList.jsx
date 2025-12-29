@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import "./TicketsList.css";
+import "../styles/TicketsList.css";
 
 /* Demo data (thay bằng fetch từ API khi cần) */
 const DEMO_TICKETS = [
