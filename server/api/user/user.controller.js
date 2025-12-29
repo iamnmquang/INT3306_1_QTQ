@@ -1,4 +1,6 @@
 const UserService = require('./user.service.js');
+const bcrypt = require('bcrypt');
+const cloudinary = require('../../utils/cloudinary');
 
 const UserController = {
   getAll: async (req, res) => {
@@ -49,14 +51,99 @@ const UserController = {
 
   profile: async (req, res, next) => {
     try {
-      const { userId } = req.payload;
+      const userId = req.user.id;
+
       const user = await UserService.getById(userId);
+      delete user.password;
+
+      res.json(user);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+
+  updateProfile: async (req, res, next) => {
+    try {
+      const userId = req.user.id;
+
+      const allowedFields = ['name', 'phone', 'address'];
+      const data = {};
+
+      allowedFields.forEach(field => {
+        if (req.body[field] !== undefined) {
+          data[field] = req.body[field];
+        }
+      });
+
+      const user = await UserService.update(userId, data);
+      delete user.password;
+
+      res.json(user);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  updateAvatar: async (req, res, next) => {
+    try {
+      const userId = req.user.id;
+
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+
+      const uploadToCloudinary = () =>
+        new Promise((resolve, reject) => {
+          cloudinary.uploader.upload_stream(
+            { folder: 'avatars' },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          ).end(req.file.buffer);
+        });
+
+      const result = await uploadToCloudinary();
+
+      const user = await UserService.update(userId, {
+        avatarUrl: result.secure_url
+      });
+
       delete user.password;
       res.json(user);
     } catch (err) {
       next(err);
     }
   },
+
+
+  changePassword: async (req, res, next) => {
+    try {
+      const userId = req.user.id;
+      const { oldPassword, newPassword } = req.body;
+
+      if (!oldPassword || !newPassword) {
+        return res.status(400).json({ message: 'Missing password' });
+      }
+
+      const user = await UserService.getById(userId);
+
+      const isMatch = bcrypt.compareSync(oldPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Old password incorrect' });
+      }
+
+      const hashed = bcrypt.hashSync(newPassword, 12);
+      await UserService.update(userId, { password: hashed });
+
+      res.json({ message: 'Password changed successfully' });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+
 };
 
 module.exports = UserController

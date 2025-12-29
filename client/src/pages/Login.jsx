@@ -26,46 +26,31 @@ export default function Login() {
             const res = await loginUser({ email, password });
 
             console.log("LOGIN RESPONSE:", res.data);
-            console.log("USER FROM API:", res.data.user);
-
 
             const accessToken = res.data?.accessToken || res.data?.token;
-            const refreshToken = res.data?.refreshToken;
-            const user =
-                res.data?.user ||
-                {
-                    id: email,        // tạm dùng email làm id
-                    email: email,
-                };
+            const user = res.data?.user;
 
-
-            if (!accessToken) {
-                throw new Error("Không nhận được token từ server.");
+            if (!accessToken || !user) {
+                throw new Error("Server không trả đủ dữ liệu đăng nhập.");
             }
 
-            // Lưu token + user + trạng thái đăng nhập
             localStorage.setItem("accessToken", accessToken);
-            if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
-            if (user) localStorage.setItem("user", JSON.stringify(user));
-
-            // 🔥 THÊM DÒNG NÀY
+            localStorage.setItem("user", JSON.stringify(user));
             localStorage.setItem("isLoggedIn", "true");
 
-            // 🔥 Emit sự kiện để App cập nhật user trong cùng tab
             window.dispatchEvent(new Event("userLogin"));
-
-            // 👉 CHUYỂN VỀ TRANG CHỦ
             navigate("/");
         } catch (err) {
-            const message = err.response?.data?.message || err.message || "Đăng nhập thất bại.";
+            const message =
+                err.response?.data?.message ||
+                err.message ||
+                "Đăng nhập thất bại.";
             setError(message);
         } finally {
             setIsLoading(false);
         }
-
-
-
     };
+
 
     return (
         <div className="login-page">

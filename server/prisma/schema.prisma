@@ -69,6 +69,10 @@ model User {
   isAccountVerified Boolean        @default(false)
   role              Role           @default(USER)
 
+  avatarUrl         String?
+  phone             String?
+  address           String?
+
   tickets Ticket[] @relation("UserTickets")
 
   chatRooms    ChatRoom[]

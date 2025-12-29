@@ -143,47 +143,50 @@ export default function SupportChat() {
 
     /* ================= UI ================= */
     return (
-        <div className="support-chat-container">
-            <div className="support-chat-header">
-                <h3>💬 Hỗ trợ khách hàng</h3>
-                <span className="status">Admin online</span>
-            </div>
+        <div className="support-chat-page">
+            <div className="support-chat-card">
+                <div className="support-chat-header">
+                    <h3>💬 Hỗ trợ khách hàng</h3>
+                    <span className="status online">Admin online</span>
+                </div>
 
-            <div className="support-chat-messages">
-                {messages.map((m) => (
-                    <div
-                        key={m.id}
-                        className={`chat-message ${m.senderRole === "USER" ? "me" : "admin"
-                            }`}
-                    >
-                        <div className="bubble">
-                            <p>{m.content}</p>
-                            <span className="time">
-                                {formatMessageTime(m.createdAt)}
-                            </span>
+                <div className="support-chat-messages">
+                    {messages.map((m) => (
+                        <div
+                            key={m.id}
+                            className={`chat-message ${m.senderRole === "USER" ? "me" : "admin"
+                                }`}
+                        >
+                            <div className="bubble">
+                                <p>{m.content}</p>
+                                <span className="time">
+                                    {formatMessageTime(m.createdAt)}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
 
-                {isAdminTyping && (
-                    <div className="typing-indicator">
-                        Admin đang nhập...
-                    </div>
-                )}
+                    {isAdminTyping && (
+                        <div className="typing-indicator">
+                            Admin đang nhập...
+                        </div>
+                    )}
 
-                <div ref={messagesEndRef} />
-            </div>
+                    <div ref={messagesEndRef} />
+                </div>
 
-            <div className="support-chat-input">
-                <input
-                    type="text"
-                    placeholder="Nhập tin nhắn..."
-                    value={message}
-                    onChange={handleTyping}
-                    onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                />
-                <button onClick={sendMessage}>Gửi</button>
+                <div className="support-chat-input">
+                    <input
+                        type="text"
+                        placeholder="Nhập tin nhắn..."
+                        value={message}
+                        onChange={handleTyping}
+                        onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                    />
+                    <button onClick={sendMessage}>Gửi</button>
+                </div>
             </div>
         </div>
     )
+
 }

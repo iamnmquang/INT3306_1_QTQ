@@ -28,6 +28,8 @@ app.use('/aircraft', aircraftRouter);
 app.use('/airport', airportRouter);
 app.use('/news', newsRouter);
 app.use('/support-chat', supportChatRouter);
+app.use("/uploads", express.static("uploads"));
+
 
 
 

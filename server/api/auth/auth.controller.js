@@ -98,12 +98,20 @@ const AuthController = {
       }
 
       const { accessToken, refreshToken } = generateTokens(existingUser);
-      await AuthService.addRefreshTokenToWhiteList({ refreshToken, userId: existingUser.id })
+      await AuthService.addRefreshTokenToWhiteList({
+        refreshToken,
+        userId: existingUser.id
+      });
+
+      // ❌ KHÔNG gửi password về client
+      const { password: _, ...safeUser } = existingUser;
 
       return res.json({
         accessToken,
         refreshToken,
+        user: safeUser,   // ⭐⭐⭐ QUAN TRỌNG
       });
+
     } catch (err) {
       next(err)
       return res.status(400).json({ message: err.message });
