@@ -10,28 +10,25 @@ const OTPService = {
   sendOTP: async (data) => {
     const { email, type, name, ticketNumber = null } = data;
 
-    // 1. Generate OTP
     const otp = generateOTP();
-
-    // 2. Hash OTP
     const hashed = await hashOTP(otp);
-
-    // 3. Lưu OTP vào DB
     const expiresAt = new Date(Date.now() + OTP_TTL_MS);
-    try {
-      await prisma.emailVerification.create({
-        data: {
-          email,
-          otp: hashed,
-          type,
-          expiresAt,
-        }
-      });
-    } catch (err) {
-      throw new Error("Không thể tạo mã OTP");
-    }
 
-    // 4. Chọn template + subject theo loại OTP
+    // 🔥 FIX 1: Xoá OTP cũ
+    await prisma.emailVerification.deleteMany({
+      where: { email, type }
+    });
+
+    // Lưu OTP
+    await prisma.emailVerification.create({
+      data: {
+        email,
+        otp: hashed,
+        type,
+        expiresAt,
+      }
+    });
+
     let subject, template;
     if (type === 'REGISTER') {
       subject = 'Verify account QAirline';
@@ -46,22 +43,16 @@ const OTPService = {
       throw new Error('Loại OTP không hợp lệ');
     }
 
-    // 5. Context gửi email
-    const context = {
-      name,
-      otp,
-      expiry: '5 minutes',
-    };
-
+    const context = { name, otp, expiry: '5 minutes' };
     if (ticketNumber) context.ticketNumber = ticketNumber;
 
-    // 6. Gửi email
-    await sendEmail({
-      to: email,
-      subject,
-      template,
-      context,
-    });
+    // 🔥 FIX 2: log lỗi mail
+    try {
+      await sendEmail({ to: email, subject, template, context });
+    } catch (err) {
+      console.error("❌ EMAIL ERROR:", err);
+      throw new Error("Không gửi được email OTP");
+    }
   },
 
   verifyOTP: async ({ email, type, otpInput }) => {

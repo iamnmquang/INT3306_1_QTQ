@@ -44,6 +44,17 @@ export const logoutUser = (token) => {
     return api.post('/auth/logout', { refreshToken: token });
 };
 
+export const forgotPassword = (data) =>
+    api.post("/auth/forgot-password", data);
+
+export const verifyForgotOtp = (data) =>
+    api.post("/auth/verify-reset-email", data);
+
+export const resetPassword = (data) =>
+    api.post("/auth/reset-password", data);
+
+
+
 
 
 // Cấu hình Interceptor (Tùy chọn nâng cao)

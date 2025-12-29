@@ -18,6 +18,9 @@ import Promotions from './pages/Promotions';
 import VerifyOtp from './pages/VerifyOtp';
 import Profile from './pages/Profile';
 import SupportChat from './pages/SupportChat';
+import ForgotPassword from './pages/ForgotPassword';
+import VerifyForgotOtp from './pages/VerifyForgotOtp';
+import ResetPassword from './pages/ResetPassword';
 
 import "./index.css";
 
@@ -56,6 +59,11 @@ function App() {
         <Route path="/verify-register-email" element={<VerifyOtp />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/support-chat" element={<SupportChat />} />
+
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-forgot-otp" element={<VerifyForgotOtp />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
       </Routes>
     </BrowserRouter>
   );

@@ -22,41 +22,37 @@ export default function Register() {
             return;
         }
 
+        if (password.length < 6) {
+            setError("Mật khẩu phải có ít nhất 6 ký tự!");
+            return;
+        }
+
         setIsLoading(true);
 
         try {
-            // 1. Chuẩn bị dữ liệu gửi lên Backend
             const payload = {
-                name: username,      // Backend yêu cầu field 'name' hoặc user data khác
+                name: username,
                 email: email,
                 password: password
             };
 
-            // 2. Gọi API đăng ký
-            // Backend sẽ tạo user và gửi email OTP ngay lúc này
             await registerUser(payload);
 
-            // 3. Thông báo nhẹ (tuỳ chọn)
-            // alert("Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP.");
-
-            // 4. QUAN TRỌNG: Chuyển hướng sang trang nhập OTP
-            // Truyền email qua 'state' để trang VerifyOtp.jsx tự động điền
-            navigate("/verify-register-email", { state: { email: email } });
+            navigate("/verify-register-email", { state: { email } });
 
         } catch (err) {
             console.error("Register error (full):", err);
 
-            // network error (no response)
             if (!err.response) {
                 setError("Không kết nối tới server. Vui lòng kiểm tra mạng hoặc server đang chạy.");
             } else {
-                // Có response từ server
                 const data = err.response.data;
-                // Các backend có thể trả nhiều cấu trúc: { message }, { error }, { errors: [...] }
                 const message =
                     data?.message ||
                     data?.error ||
-                    (Array.isArray(data?.errors) ? data.errors.map(e => e.msg || e.message).join(', ') : null) ||
+                    (Array.isArray(data?.errors)
+                        ? data.errors.map(e => e.msg || e.message).join(", ")
+                        : null) ||
                     `Lỗi server: ${err.response.status}`;
 
                 setError(message || "Đăng ký thất bại!");
@@ -65,6 +61,7 @@ export default function Register() {
             setIsLoading(false);
         }
     };
+
 
     return (
         <div className="auth-page">
