@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { userApi } from '../api/userApi';
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  CheckCircle,
+  XCircle,
+  AlertTriangle
+} from 'lucide-react';
 
 export default function Profile() {
-  const { user, updateUser, changePassword } = useAuth();
+  const { user, updateUser } = useAuth();
 
   // ===== PROFILE STATE =====
   const [name, setName] = useState(user?.name || '');
@@ -17,6 +26,14 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [pwLoading, setPwLoading] = useState(false);
+
+  // ===== NOTIFICATION STATE =====
+  const [notification, setNotification] = useState(null);
+
+  const showNotification = (type, message) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   // ===== FETCH PROFILE =====
   useEffect(() => {
@@ -35,14 +52,12 @@ export default function Profile() {
 
         updateUser(profile);
       } catch (err) {
-        console.error('Load profile failed', err);
+        showNotification('error', 'Không tải được thông tin người dùng');
       }
     };
 
     loadProfile();
-    return () => {
-      mounted = false;
-    };
+    return () => (mounted = false);
   }, []);
 
   // ===== UPDATE PROFILE =====
@@ -51,7 +66,6 @@ export default function Profile() {
     try {
       setSaving(true);
 
-      // Backend chỉ cho phép: name, phone, address
       const res = await userApi.updateProfile({
         name,
         phone,
@@ -61,13 +75,12 @@ export default function Profile() {
       const updatedUser = res.user || res;
       updateUser(updatedUser);
 
-      alert('Cập nhật thông tin thành công ✅');
+      showNotification('success', 'Cập nhật thông tin thành công');
     } catch (err) {
-      const msg =
-        err?.response?.data?.message ||
-        err.message ||
-        'Cập nhật thất bại';
-      alert(msg);
+      showNotification(
+        'error',
+        err?.response?.data?.message || 'Cập nhật thất bại'
+      );
     } finally {
       setSaving(false);
     }
@@ -78,12 +91,12 @@ export default function Profile() {
     e.preventDefault();
 
     if (!currentPassword || !newPassword) {
-      alert('Vui lòng nhập đầy đủ mật khẩu');
+      showNotification('warning', 'Vui lòng nhập đầy đủ mật khẩu');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      alert('Mật khẩu mới không khớp');
+      showNotification('warning', 'Mật khẩu mới không khớp');
       return;
     }
 
@@ -99,23 +112,38 @@ export default function Profile() {
       setNewPassword('');
       setConfirmPassword('');
 
-      alert('Đổi mật khẩu thành công ✅');
+      showNotification('success', 'Đổi mật khẩu thành công');
     } catch (err) {
-      const msg =
-        err?.response?.data?.message ||
-        err.message ||
-        'Đổi mật khẩu thất bại';
-      alert(msg);
+      showNotification(
+        'error',
+        err?.response?.data?.message || 'Đổi mật khẩu thất bại'
+      );
     } finally {
       setPwLoading(false);
     }
   };
 
-
   return (
-    <div className="min-h-screen bg-slate-50 py-10">
-      <div className="max-w-4xl mx-auto px-6">
+    <div className="min-h-screen bg-slate-50 py-10 relative">
+      {/* ===== NOTIFICATION ===== */}
+      {notification && (
+        <div className="fixed top-6 right-6 z-50 animate-slide-in">
+          <div
+            className={`flex items-center gap-3 px-5 py-4 rounded-xl shadow-lg text-white
+              ${notification.type === 'success' && 'bg-emerald-500'}
+              ${notification.type === 'error' && 'bg-red-500'}
+              ${notification.type === 'warning' && 'bg-amber-500'}
+            `}
+          >
+            {notification.type === 'success' && <CheckCircle size={20} />}
+            {notification.type === 'error' && <XCircle size={20} />}
+            {notification.type === 'warning' && <AlertTriangle size={20} />}
+            <span className="font-medium">{notification.message}</span>
+          </div>
+        </div>
+      )}
 
+      <div className="max-w-4xl mx-auto px-6">
         {/* ===== HEADER ===== */}
         <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
           <div className="flex items-center gap-6">
@@ -124,10 +152,14 @@ export default function Profile() {
             </div>
 
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-slate-900">
+              <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <User className="h-5 w-5 text-slate-500" />
                 {name || 'User'}
               </h1>
-              <p className="text-slate-600">{email}</p>
+              <p className="text-slate-600 flex items-center gap-2 mt-1">
+                <Mail className="h-4 w-4 text-slate-400" />
+                {email}
+              </p>
             </div>
           </div>
         </div>
@@ -137,17 +169,14 @@ export default function Profile() {
           onSubmit={handleSaveProfile}
           className="bg-white rounded-2xl p-6 shadow-sm mb-6"
         >
-          <h2 className="text-lg font-semibold mb-4">
-            Thông tin tài khoản
-          </h2>
+          <h2 className="text-lg font-semibold mb-4">Thông tin tài khoản</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
             {/* NAME */}
             <div>
               <label className="text-sm text-slate-600">Họ và tên</label>
               <input
-                className="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="mt-1 w-full border rounded-lg px-3 py-2"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -157,7 +186,7 @@ export default function Profile() {
             <div>
               <label className="text-sm text-slate-600">Email</label>
               <input
-                className="mt-1 w-full border rounded-lg px-3 py-2 bg-slate-100 text-slate-500 cursor-not-allowed"
+                className="mt-1 w-full border rounded-lg px-3 py-2 bg-slate-100"
                 value={email}
                 disabled
               />
@@ -186,9 +215,8 @@ export default function Profile() {
 
           <div className="flex justify-end mt-6">
             <button
-              type="submit"
               disabled={saving}
-              className="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium disabled:opacity-70"
+              className="px-6 py-2 rounded-lg bg-blue-600 text-white font-medium"
             >
               {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
@@ -200,62 +228,42 @@ export default function Profile() {
           onSubmit={handleChangePassword}
           className="bg-white rounded-2xl p-6 shadow-sm"
         >
-          <h2 className="text-lg font-semibold mb-4">
-            Đổi mật khẩu
-          </h2>
+          <h2 className="text-lg font-semibold mb-4">Đổi mật khẩu</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-            <div>
-              <label className="text-sm text-slate-600">
-                Mật khẩu hiện tại
-              </label>
-              <input
-                type="password"
-                className="mt-1 w-full border rounded-lg px-3 py-2"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-slate-600">
-                Mật khẩu mới
-              </label>
-              <input
-                type="password"
-                className="mt-1 w-full border rounded-lg px-3 py-2"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="text-sm text-slate-600">
-                Xác nhận mật khẩu
-              </label>
-              <input
-                type="password"
-                className="mt-1 w-full border rounded-lg px-3 py-2"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
+            <input
+              type="password"
+              placeholder="Mật khẩu hiện tại"
+              className="border rounded-lg px-3 py-2"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+            <input
+              type="password"
+              placeholder="Mật khẩu mới"
+              className="border rounded-lg px-3 py-2"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <input
+              type="password"
+              placeholder="Xác nhận mật khẩu"
+              className="border rounded-lg px-3 py-2"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
           </div>
 
           <div className="flex justify-end mt-6">
             <button
-              type="submit"
               disabled={pwLoading}
-              className="px-6 py-2 rounded-lg bg-slate-900 text-white font-medium disabled:opacity-70"
+              className="px-6 py-2 rounded-lg bg-slate-900 text-white"
             >
               {pwLoading ? 'Đang đổi...' : 'Đổi mật khẩu'}
             </button>
           </div>
         </form>
-
       </div>
     </div>
   );
-
 }

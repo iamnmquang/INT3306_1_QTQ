@@ -163,7 +163,7 @@ export default function SupportChat() {
                                     </div>
                                     <div>
                                         <p className="text-sm text-slate-500">Hotline</p>
-                                        <p className="font-semibold text-slate-900">1900 1234</p>
+                                        <p className="font-semibold text-slate-900">0948004156</p>
                                     </div>
                                 </div>
 
@@ -174,7 +174,7 @@ export default function SupportChat() {
                                     <div>
                                         <p className="text-sm text-slate-500">Email</p>
                                         <p className="font-semibold text-slate-900">
-                                            support@skybooking.vn
+                                            23020136@vnu.edu.vn
                                         </p>
                                     </div>
                                 </div>
@@ -202,7 +202,7 @@ export default function SupportChat() {
                             <button
                                 className="w-full bg-white text-blue-600 font-semibold py-2 rounded-xl hover:bg-blue-50 transition"
                             >
-                                📞 Gọi ngay: 1900 1234
+                                📞 Gọi ngay: 0948004156
                             </button>
                         </div>
                     </div>

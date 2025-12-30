@@ -13,7 +13,7 @@ export default function Book() {
   const flightId = params.get('flightId');
   const flightSeatId = Number(params.get('flightSeatId')) || null;
   const passengers = Number(params.get('passengers')) || 1;
- 
+
   const { user } = useAuth();
 
   const [flight, setFlight] = useState(null);
@@ -41,7 +41,7 @@ export default function Book() {
       return () => (mounted = false);
     }
 
-  }, [ location.state]);
+  }, [location.state]);
 
   useEffect(() => {
     let mounted = true;
@@ -128,7 +128,7 @@ export default function Book() {
       // send e-ticket email (fire-and-forget)
       const bookingRef = res.tickets?.[0]?.bookingReference || '';
       if (bookingRef) {
-        ticketApi.sendETicket(bookingRef).catch(() => {});
+        ticketApi.sendETicket(bookingRef).catch(() => { });
       }
       // navigate to booking success page showing booking ref
       navigate(`/booking-success?ref=${bookingRef}`);
@@ -154,7 +154,7 @@ export default function Book() {
   useEffect(() => {
     return () => {
       if (lockedSeats.length > 0) {
-        flightSeatApi.unlockSeats(lockedSeats).catch(() => {});
+        flightSeatApi.unlockSeats(lockedSeats).catch(() => { });
       }
     };
   }, [lockedSeats]);
@@ -175,7 +175,7 @@ export default function Book() {
       <h1 className="text-2xl font-semibold mb-4">Đặt chỗ</h1>
 
       {loading && <div>Đang xử lý...</div>}
-      {error && <div className="text-red-600">{error}</div>} 
+      {error && <div className="text-red-600">{error}</div>}
 
       {flight && (
         <div className="bg-white p-6 rounded-md shadow">
@@ -209,9 +209,9 @@ export default function Book() {
                 <button onClick={goBackToSelect} className="px-3 py-2 border rounded-md">Thay đổi chuyến bay</button>
                 <button onClick={() => {
                   if (user) return setStep('passenger');
-                   navigate('/login', { state: { from: location } });
-                  
-                
+                  navigate('/login', { state: { from: location } });
+
+
                 }} className="px-4 py-2 bg-blue-600 text-white rounded-md">Đăng nhập và tiếp tục</button>
               </div>
 
