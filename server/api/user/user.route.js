@@ -23,6 +23,11 @@ userRouter.put(
   UserController.updateAvatar
 );
 
+userRouter.put(
+  '/profile/password',
+  isAuthenticated,
+  UserController.changePassword
+);
 
 
 /* ===== ADMIN / GENERIC ===== */

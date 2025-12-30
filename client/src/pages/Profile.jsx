@@ -5,24 +5,37 @@ import { userApi } from '../api/userApi';
 export default function Profile() {
   const { user, updateUser, changePassword } = useAuth();
 
+  // ===== PROFILE STATE =====
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [address, setAddress] = useState(user?.address || '');
   const [saving, setSaving] = useState(false);
 
-  // Fetch latest profile when page mounts
+  // ===== PASSWORD STATE =====
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwLoading, setPwLoading] = useState(false);
+
+  // ===== FETCH PROFILE =====
   useEffect(() => {
     let mounted = true;
+
     const loadProfile = async () => {
       try {
         const res = await userApi.getProfile();
         const profile = res.user || res;
         if (!mounted) return;
+
         setName(profile.name || '');
         setEmail(profile.email || '');
-        // sync global user too
-        if (profile) updateUser(profile);
+        setPhone(profile.phone || '');
+        setAddress(profile.address || '');
+
+        updateUser(profile);
       } catch (err) {
-        // ignore – user may be already in state
+        console.error('Load profile failed', err);
       }
     };
 
@@ -32,134 +45,217 @@ export default function Profile() {
     };
   }, []);
 
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [pwLoading, setPwLoading] = useState(false);
-
+  // ===== UPDATE PROFILE =====
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     try {
       setSaving(true);
-      const res = await userApi.updateProfile({ name, email });
 
-      // server may return updated user object or payload wrapper
+      // Backend chỉ cho phép: name, phone, address
+      const res = await userApi.updateProfile({
+        name,
+        phone,
+        address
+      });
+
       const updatedUser = res.user || res;
       updateUser(updatedUser);
-      alert('Profile updated successfully ✅');
+
+      alert('Cập nhật thông tin thành công ✅');
     } catch (err) {
-      const msg = err?.response?.data?.message || err.message || 'Update failed';
+      const msg =
+        err?.response?.data?.message ||
+        err.message ||
+        'Cập nhật thất bại';
       alert(msg);
     } finally {
       setSaving(false);
     }
   };
 
+  // ===== CHANGE PASSWORD =====
   const handleChangePassword = async (e) => {
     e.preventDefault();
+
+    if (!currentPassword || !newPassword) {
+      alert('Vui lòng nhập đầy đủ mật khẩu');
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
-      alert('New password and confirm password do not match');
+      alert('Mật khẩu mới không khớp');
       return;
     }
 
     try {
       setPwLoading(true);
-      await changePassword(email, newPassword);
+
+      await userApi.changePassword({
+        oldPassword: currentPassword,
+        newPassword
+      });
+
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      alert('Password changed successfully ✅');
+
+      alert('Đổi mật khẩu thành công ✅');
     } catch (err) {
-      const msg = err?.response?.data?.message || err.message || 'Change password failed';
+      const msg =
+        err?.response?.data?.message ||
+        err.message ||
+        'Đổi mật khẩu thất bại';
       alert(msg);
     } finally {
       setPwLoading(false);
     }
   };
 
+
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-semibold mb-6">Profile</h1>
+    <div className="min-h-screen bg-slate-50 py-10">
+      <div className="max-w-4xl mx-auto px-6">
 
-      <form onSubmit={handleSaveProfile} className="bg-white p-6 rounded-md shadow-sm mb-6">
-        <h2 className="text-lg font-medium mb-4">Account info</h2>
+        {/* ===== HEADER ===== */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold">
+              {name?.charAt(0)?.toUpperCase() || 'U'}
+            </div>
 
-        <div className="grid grid-cols-1 gap-4">
-          <label className="flex flex-col">
-            <span className="text-sm text-gray-600">Name</span>
-            <input
-              className="mt-1 border px-3 py-2 rounded-md"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </label>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-slate-900">
+                {name || 'User'}
+              </h1>
+              <p className="text-slate-600">{email}</p>
+            </div>
+          </div>
+        </div>
 
-          <label className="flex flex-col">
-            <span className="text-sm text-gray-600">Email</span>
-            <input
-              className="mt-1 border px-3 py-2 rounded-md"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </label>
+        {/* ===== ACCOUNT INFO ===== */}
+        <form
+          onSubmit={handleSaveProfile}
+          className="bg-white rounded-2xl p-6 shadow-sm mb-6"
+        >
+          <h2 className="text-lg font-semibold mb-4">
+            Thông tin tài khoản
+          </h2>
 
-          <div className="pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* NAME */}
+            <div>
+              <label className="text-sm text-slate-600">Họ và tên</label>
+              <input
+                className="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+
+            {/* EMAIL */}
+            <div>
+              <label className="text-sm text-slate-600">Email</label>
+              <input
+                className="mt-1 w-full border rounded-lg px-3 py-2 bg-slate-100 text-slate-500 cursor-not-allowed"
+                value={email}
+                disabled
+              />
+            </div>
+
+            {/* PHONE */}
+            <div>
+              <label className="text-sm text-slate-600">Số điện thoại</label>
+              <input
+                className="mt-1 w-full border rounded-lg px-3 py-2"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </div>
+
+            {/* ADDRESS */}
+            <div>
+              <label className="text-sm text-slate-600">Địa chỉ</label>
+              <input
+                className="mt-1 w-full border rounded-lg px-3 py-2"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end mt-6">
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md"
               disabled={saving}
+              className="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium disabled:opacity-70"
             >
-              {saving ? 'Saving...' : 'Save changes'}
+              {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
           </div>
-        </div>
-      </form>
+        </form>
 
-      <form onSubmit={handleChangePassword} className="bg-white p-6 rounded-md shadow-sm">
-        <h2 className="text-lg font-medium mb-4">Change password</h2>
+        {/* ===== CHANGE PASSWORD ===== */}
+        <form
+          onSubmit={handleChangePassword}
+          className="bg-white rounded-2xl p-6 shadow-sm"
+        >
+          <h2 className="text-lg font-semibold mb-4">
+            Đổi mật khẩu
+          </h2>
 
-        <div className="grid grid-cols-1 gap-4">
-          <label className="flex flex-col">
-            <span className="text-sm text-gray-600">Current password</span>
-            <input
-              type="password"
-              className="mt-1 border px-3 py-2 rounded-md"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-            />
-          </label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-          <label className="flex flex-col">
-            <span className="text-sm text-gray-600">New password</span>
-            <input
-              type="password"
-              className="mt-1 border px-3 py-2 rounded-md"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
-          </label>
+            <div>
+              <label className="text-sm text-slate-600">
+                Mật khẩu hiện tại
+              </label>
+              <input
+                type="password"
+                className="mt-1 w-full border rounded-lg px-3 py-2"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+            </div>
 
-          <label className="flex flex-col">
-            <span className="text-sm text-gray-600">Confirm new password</span>
-            <input
-              type="password"
-              className="mt-1 border px-3 py-2 rounded-md"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
-          </label>
+            <div>
+              <label className="text-sm text-slate-600">
+                Mật khẩu mới
+              </label>
+              <input
+                type="password"
+                className="mt-1 w-full border rounded-lg px-3 py-2"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
 
-          <div className="pt-4">
+            <div>
+              <label className="text-sm text-slate-600">
+                Xác nhận mật khẩu
+              </label>
+              <input
+                type="password"
+                className="mt-1 w-full border rounded-lg px-3 py-2"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end mt-6">
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md"
               disabled={pwLoading}
+              className="px-6 py-2 rounded-lg bg-slate-900 text-white font-medium disabled:opacity-70"
             >
-              {pwLoading ? 'Changing...' : 'Change password'}
+              {pwLoading ? 'Đang đổi...' : 'Đổi mật khẩu'}
             </button>
           </div>
-        </div>
-      </form>
+        </form>
+
+      </div>
     </div>
   );
+
 }

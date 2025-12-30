@@ -13,4 +13,13 @@ export const userApi = {
     return response.data;
   },
 
+  // Change password
+  changePassword: async ({ oldPassword, newPassword }) => {
+    const response = await axiosInstance.put('/user/profile/password', {
+      oldPassword,
+      newPassword
+    });
+    return response.data;
+  }
+
 }

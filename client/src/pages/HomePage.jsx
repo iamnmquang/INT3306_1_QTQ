@@ -25,7 +25,6 @@ const cards = [
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <Header />
       {/* ================= HERO ================= */}
       <section id="home" className="relative h-[85vh] w-full">
         {/* Background image */}
@@ -91,9 +90,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-     
-     <Footer />
-        </div>
+
+      <Footer />
+    </div>
   );
 }
 

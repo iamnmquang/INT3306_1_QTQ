@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import Register from './pages/Register';
 import VerifyRegisterEmail from './pages/VerifyRegisterEmail';
 import Login from './pages/Login';
+import Header from './components/homepage/Header';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -12,12 +13,14 @@ import SelectFlight from './pages/SelectFlight';
 import Book from './pages/Book';
 import BookingSuccess from './pages/BookingSuccess';
 import MyFlights from './pages/MyFlights';
+import SupportChat from './pages/SupportChat';
 
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <Header />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
@@ -31,6 +34,7 @@ function App() {
           <Route path="/book" element={<Book />} />
           <Route path="/booking-success" element={<BookingSuccess />} />
           <Route path="/my-flights" element={<MyFlights />} />
+          <Route path="/support-chat" element={<ProtectedRoute><SupportChat /></ProtectedRoute>} />
 
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />

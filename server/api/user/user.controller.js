@@ -117,8 +117,33 @@ const UserController = {
     }
   },
 
+  changePassword: async (req, res, next) => {
+    try {
+      const userId = req.user.id;
+      const { oldPassword, newPassword } = req.body;
 
- 
+      if (!oldPassword || !newPassword) {
+        return res.status(400).json({ message: 'Missing password' });
+      }
+
+      const user = await UserService.getById(userId);
+
+      const isMatch = bcrypt.compareSync(oldPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Old password incorrect' });
+      }
+
+      const hashed = bcrypt.hashSync(newPassword, 12);
+      await UserService.update(userId, { password: hashed });
+
+      res.json({ message: 'Password changed successfully' });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+
+
 };
 
 module.exports = UserController
