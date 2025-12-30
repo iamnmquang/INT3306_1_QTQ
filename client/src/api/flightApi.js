@@ -16,4 +16,25 @@ export const flightApi = {
     const response = await axiosInstance.get(`/flight/${id}`);
     return response.data;
   },
+
+  // Admin / CRUD
+  getAll: async () => {
+    const response = await axiosInstance.get('/flight');
+    return response.data;
+  },
+
+  create: async (payload) => {
+    const response = await axiosInstance.post('/flight', payload);
+    return response.data;
+  },
+
+  update: async (id, payload) => {
+    const response = await axiosInstance.put(`/flight/${id}`, payload);
+    return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await axiosInstance.delete(`/flight/${id}`);
+    return response.data;
+  },
 };

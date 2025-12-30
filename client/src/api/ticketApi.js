@@ -34,5 +34,26 @@ export const ticketApi = {
   create: async (payload) => {
     const response = await axiosInstance.post('/ticket', payload);
     return response.data;
+  },
+
+  // Admin
+  getAll: async () => {
+    const response = await axiosInstance.get('/ticket');
+    return response.data;
+  },
+
+  getByBookingReference: async (bookingReference) => {
+    const response = await axiosInstance.get(`/ticket/booking/${bookingReference}`);
+    return response.data;
+  },
+
+  update: async (id, payload) => {
+    const response = await axiosInstance.put(`/ticket/${id}`, payload);
+    return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await axiosInstance.delete(`/ticket/${id}`);
+    return response.data;
   }
 };

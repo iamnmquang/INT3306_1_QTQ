@@ -18,10 +18,9 @@ ticketRouter.get(
 );
 
 
-// Get ticket by booking reference
+// Get ticket by booking reference (public; controller will limit fields when unauthenticated)
 ticketRouter.get(
   '/booking/:bookingReference',
-  isAuthenticated,
   TicketController.getByBookingReference
 );
 

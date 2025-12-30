@@ -14,6 +14,11 @@ import Book from './pages/Book';
 import BookingSuccess from './pages/BookingSuccess';
 import MyFlights from './pages/MyFlights';
 import SupportChat from './pages/SupportChat';
+import BookingSearch from './pages/BookingSearch';
+
+// Admin
+import Admin from './pages/Admin';
+import AdminRoute from './components/common/AdminRoute';
 
 
 function App() {
@@ -30,11 +35,16 @@ function App() {
 
           {/* Protected */}
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
           <Route path="/select-flight" element={<SelectFlight />} />
           <Route path="/book" element={<Book />} />
           <Route path="/booking-success" element={<BookingSuccess />} />
           <Route path="/my-flights" element={<MyFlights />} />
           <Route path="/support-chat" element={<ProtectedRoute><SupportChat /></ProtectedRoute>} />
+          <Route path="/booking-search" element={<BookingSearch />} />
+
+          {/* Admin */}
+          <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
 
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />
