@@ -22,12 +22,37 @@ const TicketController = {
     }
   },
 
-  // Get ticket by booking reference
+  // Get ticket by booking reference (public; returns full details for authenticated requests)
   getByBookingReference: async (req, res) => {
     try {
-      const ticket = await TicketService.getByBookingReference(req.params.bookingReference);
-      if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
-      res.json(ticket);
+      const tickets = await TicketService.getByBookingReference(req.params.bookingReference);
+      if (!tickets || tickets.length === 0) return res.status(404).json({ message: 'Ticket not found' });
+
+      // If the request is authenticated (middleware may set req.payload), return full records
+      if (req.payload) {
+        return res.json(tickets);
+      }
+
+      // Otherwise return limited view for public lookup
+      const mapped = tickets.map(t => ({
+        id: t.id,
+        bookingReference: t.bookingReference,
+        ticketNumber: t.ticketNumber,
+        flight: t.flight ? {
+          id: t.flight.id,
+          flightNumber: t.flight.flightNumber,
+          departureTime: t.flight.departureTime,
+          arrivalTime: t.flight.arrivalTime,
+          departureAirport: t.flight.departureAirport ? { iataCode: t.flight.departureAirport.iataCode, city: t.flight.departureAirport.city } : null,
+          arrivalAirport: t.flight.arrivalAirport ? { iataCode: t.flight.arrivalAirport.iataCode, city: t.flight.arrivalAirport.city } : null,
+        } : null,
+        seatNumber: t.seatNumber || t.flightSeat?.seatNumber || null,
+        passengerName: t.passenger?.fullName || t.passengerName || null,
+        bookedAt: t.bookedAt,
+        isCancelled: t.isCancelled,
+      }));
+
+      res.json(mapped);
     } catch (err) {
       res.status(500).json({ message: 'Error getting ticket', error: err.message });
     }

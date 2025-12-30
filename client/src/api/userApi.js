@@ -20,6 +20,30 @@ export const userApi = {
       newPassword
     });
     return response.data;
+  // Admin / Generic
+  getAll: async () => {
+    const res = await axiosInstance.get('/user');
+    return res.data;
+  },
+
+  getById: async (id) => {
+    const res = await axiosInstance.get(`/user/${id}`);
+    return res.data;
+  },
+
+  create: async (payload) => {
+    const res = await axiosInstance.post('/user', payload);
+    return res.data;
+  },
+
+  update: async (id, payload) => {
+    const res = await axiosInstance.put(`/user/${id}`, payload);
+    return res.data;
+  },
+
+  delete: async (id) => {
+    const res = await axiosInstance.delete(`/user/${id}`);
+    return res.data;
   }
 
 }

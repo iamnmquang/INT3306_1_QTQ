@@ -27,16 +27,51 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16 lg:h-20">
 
-          {/* ===== LOGO ===== */}
-          <div
-            onClick={handleHomeClick}
-            className="flex items-center gap-3 cursor-pointer group"
-          >
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity" />
-              <div className="relative bg-gradient-to-r from-blue-600 to-indigo-600 p-2.5 rounded-xl">
-                ✈️
-              </div>
+        {/* Logo */}
+        <div
+          className="text-2xl font-bold text-blue-600 cursor-pointer"
+          onClick={handleHomeClick}
+        >
+          QTQAirline
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex items-center space-x-6">
+          <button className="text-gray-700 hover:text-blue-600 font-medium transition" onClick={handleHomeClick}>
+            Trang chủ
+          </button>
+          <button className="text-gray-700 hover:text-blue-600 font-medium transition" onClick={() => navigate("/my-flights")}> 
+            Lịch bay
+          </button>
+          <button className="text-gray-700 hover:text-blue-600 font-medium transition" onClick={() => navigate("/promotions")}>
+            Khuyến mãi
+          </button>
+          <button className="text-gray-700 hover:text-blue-600 font-medium transition" onClick={() => navigate("/booking-search")}>
+            Tra cứu đặt vé
+          </button>
+          <button className="text-gray-700 hover:text-blue-600 font-medium transition" onClick={() => navigate("/support")}>
+            Hỗ trợ
+          </button>
+        </nav>
+
+        {/* Auth */}
+        <div>
+          {!isAuthenticated ? (
+            <div className="flex gap-3">
+              <button
+                className="px-4 py-2 border border-gray-300 rounded-md
+           hover:bg-gray-100 transition text-sm font-medium"
+                onClick={() => navigate("/login")}
+              >
+                Đăng nhập
+              </button>
+              <button
+                className="px-4 py-2 border border-gray-300 rounded-md
+           hover:bg-gray-100 transition text-sm font-medium"
+                onClick={() => navigate("/register")}
+              >
+                Đăng ký
+              </button>
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent hidden sm:block">
               QTQAirline
