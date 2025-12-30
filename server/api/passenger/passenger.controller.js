@@ -32,6 +32,8 @@ const PassengerController = {
     }
   },
 
+
+
   // Cập nhật thông tin hành khách
   update: async (req, res) => {
     try {

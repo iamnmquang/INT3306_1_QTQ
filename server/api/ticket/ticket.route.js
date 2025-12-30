@@ -61,21 +61,21 @@ ticketRouter.put(
   TicketController.update
 );
 
-// Send cancel code (step 1: send OTP to email)
+// Send cancel code 
 ticketRouter.post(
   '/cancel/send-code',
   isAuthenticated,
   TicketController.sendCancelCode
 );
 
-// Verify cancel code (step 2: verify OTP)
+// Verify cancel code 
 ticketRouter.post(
   '/cancel/verify-code',
   isAuthenticated,
   TicketController.verifyCancelCode
 );
 
-// Cancel ticket (step 3: final cancellation)
+// Cancel ticket 
 ticketRouter.post(
   '/cancel',
   isAuthenticated,

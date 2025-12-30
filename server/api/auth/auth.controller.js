@@ -30,7 +30,7 @@ const AuthController = {
       try {
         await OTPService.sendOTP({ email, type: 'REGISTER', name: user.name });
       } catch (otpError) {
-        console.error("❌ LỖI GỬI EMAIL:", otpError.message);
+        console.error("LỖI GỬI EMAIL:", otpError.message);
 
         // --- QUAN TRỌNG: XÓA USER VỪA TẠO ---
         // Nếu không xóa, user này sẽ thành "rác", lần sau đăng ký lại sẽ báo trùng email
@@ -80,10 +80,7 @@ const AuthController = {
         return res.status(403).json({ message: 'Invalid login credentials' })
       }
 
-      //check if account is verified
-      // if (existingUser.isAccountVerified === false) {
-      //   return res.status(403).json({ message: "Account is not verified. Please check your email for OTP." });
-      // }
+
 
       if (!existingUser.isAccountVerified) {
         await OTPService.sendOTP({ email, type: 'REGISTER', name: existingUser.name });
@@ -103,17 +100,24 @@ const AuthController = {
         userId: existingUser.id
       });
 
-      // ❌ KHÔNG gửi password về client
+      
       const { password: _, ...safeUser } = existingUser;
+
+    
+      // Set refresh token as HTTP-only cookie
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 7 days
+      });
 
       return res.json({
         accessToken,
-        refreshToken,
-        user: safeUser,   // ⭐⭐⭐ QUAN TRỌNG
+        user: safeUser,   
       });
 
     } catch (err) {
-      next(err)
       return res.status(400).json({ message: err.message });
     }
   },
@@ -121,7 +125,7 @@ const AuthController = {
   //get another pairs of tokens to keep user logged
   refreshToken: async (req, res, next) => {
     try {
-      const { refreshToken } = req.body;
+      const refreshToken = req.cookies.refreshToken;
       if (!refreshToken) {
         return res.status(400).json({ message: 'Missing refresh token' })
       }
@@ -146,10 +150,17 @@ const AuthController = {
       const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
       await AuthService.addRefreshTokenToWhiteList({ refreshToken: newRefreshToken, userId: user.id })
 
-      res.json({
-        accessToken,
-        refreshToken: newRefreshToken,
-      })
+      // Set new refresh token cookie
+      res.cookie('refreshToken', newRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 1 month
+      });
+
+      return res.json({
+        accessToken
+      });
 
     } catch (err) {
       next(err);
@@ -160,7 +171,17 @@ const AuthController = {
     try {
       const { userId } = req.payload;
       await AuthService.revokeTokens(userId);
-      return res.json({ message: "Logout successfully" })
+
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+      });
+
+      return res.json({
+        success: true,
+        message: "Logout successfully"
+      })
     } catch (err) {
       next(err)
     }
@@ -194,22 +215,33 @@ const AuthController = {
     }
   },
 
-  resetPassword: async (req, res, next) => {
+  changePassword: async (req, res, next) => {
     try {
       const { email, newPassword } = req.body;
 
-      await UserService.updatePasswordByEmail(email, newPassword);
       const user = await UserService.getbyEmail(email);
       if (!user) return res.status(404).json({ message: 'User not found' });
+
+      await UserService.updatePasswordByEmail(email, newPassword);
 
       //revoke all refresh tokens of user
       await AuthService.revokeTokens(user.id);
 
-      return res.json({ message: "Đổi mật khẩu thành công!" });
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+      });
+
+      return res.json({ 
+        success: true,
+        message: "Đổi mật khẩu thành công!" });
     } catch (err) {
       next(err);
     }
-  }
+  },
+
+ 
 };
 
 

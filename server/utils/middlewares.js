@@ -47,6 +47,8 @@ function authorizeRole(...allowedRole) {
   };
 }
 
+
+
 module.exports = {
   isAuthenticated,
   authorizeRole

@@ -1,186 +1,165 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import "../styles/Profile.css";
-
-const API_URL = "http://localhost:4000/users";
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { userApi } from '../api/userApi';
 
 export default function Profile() {
-    const [user, setUser] = useState(null);
-    const [form, setForm] = useState({
-        name: "",
-        phone: "",
-        address: ""
-    });
+  const { user, updateUser, changePassword } = useAuth();
 
-    const [passwordForm, setPasswordForm] = useState({
-        oldPassword: "",
-        newPassword: ""
-    });
+  const [name, setName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [saving, setSaving] = useState(false);
 
-    const [loading, setLoading] = useState(true);
-    const [message, setMessage] = useState("");
-    const [error, setError] = useState("");
-
-    const token = localStorage.getItem("accessToken");
-
-    /* ================= FETCH PROFILE ================= */
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                if (!token) {
-                    setError("Bạn chưa đăng nhập");
-                    return;
-                }
-
-                const res = await axios.get(`${API_URL}/profile`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                setUser(res.data);
-
-                localStorage.setItem("user", JSON.stringify(res.data));
-                window.dispatchEvent(new Event("userUpdate"));
-
-                setForm({
-                    name: res.data.name || "",
-                    phone: res.data.phone || "",
-                    address: res.data.address || ""
-                });
-            } catch {
-                setError("Không thể tải thông tin người dùng");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchProfile();
-    }, [token]);
-
-    /* ================= UPDATE PROFILE ================= */
-    const handleUpdateProfile = async (e) => {
-        e.preventDefault();
-        setMessage("");
-        setError("");
-
-        try {
-            const res = await axios.put(
-                `${API_URL}/profile`,
-                form,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-
-            setUser(res.data);
-            localStorage.setItem("user", JSON.stringify(res.data));
-            window.dispatchEvent(new Event("userUpdate"));
-
-            setMessage("✅ Cập nhật thông tin thành công");
-        } catch {
-            setError("❌ Cập nhật thông tin thất bại");
-        }
+  // Fetch latest profile when page mounts
+  useEffect(() => {
+    let mounted = true;
+    const loadProfile = async () => {
+      try {
+        const res = await userApi.getProfile();
+        const profile = res.user || res;
+        if (!mounted) return;
+        setName(profile.name || '');
+        setEmail(profile.email || '');
+        // sync global user too
+        if (profile) updateUser(profile);
+      } catch (err) {
+        // ignore – user may be already in state
+      }
     };
 
-    /* ================= CHANGE PASSWORD ================= */
-    const handleChangePassword = async (e) => {
-        e.preventDefault();
-        setMessage("");
-        setError("");
-
-        try {
-            await axios.put(
-                `${API_URL}/profile/password`,
-                passwordForm,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-
-            setPasswordForm({ oldPassword: "", newPassword: "" });
-            setMessage("✅ Đổi mật khẩu thành công");
-        } catch (err) {
-            setError(
-                err.response?.data?.message || "❌ Đổi mật khẩu thất bại"
-            );
-        }
+    loadProfile();
+    return () => {
+      mounted = false;
     };
+  }, []);
 
-    /* ================= UI ================= */
-    if (loading) return <p>Đang tải thông tin...</p>;
-    if (error) return <p className="error">{error}</p>;
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwLoading, setPwLoading] = useState(false);
 
-    return (
-        <div className="profile-container">
-            <h2>👤 Hồ sơ cá nhân</h2>
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      const res = await userApi.updateProfile({ name, email });
 
-            {message && <p className="success">{message}</p>}
+      // server may return updated user object or payload wrapper
+      const updatedUser = res.user || res;
+      updateUser(updatedUser);
+      alert('Profile updated successfully ✅');
+    } catch (err) {
+      const msg = err?.response?.data?.message || err.message || 'Update failed';
+      alert(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
 
-            {/* ===== AVATAR (MẶC ĐỊNH) ===== */}
-            <div className="profile-avatar">
-                <img
-                    src="/images/User.png"
-                    alt="avatar"
-                />
-            </div>
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      alert('New password and confirm password do not match');
+      return;
+    }
 
-            {/* ===== BASIC INFO ===== */}
-            <form className="profile-form" onSubmit={handleUpdateProfile}>
-                <label>Họ tên</label>
-                <input
-                    value={form.name}
-                    onChange={(e) =>
-                        setForm({ ...form, name: e.target.value })
-                    }
-                />
+    try {
+      setPwLoading(true);
+      await changePassword(email, newPassword);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      alert('Password changed successfully ✅');
+    } catch (err) {
+      const msg = err?.response?.data?.message || err.message || 'Change password failed';
+      alert(msg);
+    } finally {
+      setPwLoading(false);
+    }
+  };
 
-                <label>Email</label>
-                <input value={user.email} disabled />
+  return (
+    <div className="max-w-3xl mx-auto px-6 py-8">
+      <h1 className="text-2xl font-semibold mb-6">Profile</h1>
 
-                <label>Số điện thoại</label>
-                <input
-                    value={form.phone}
-                    onChange={(e) =>
-                        setForm({ ...form, phone: e.target.value })
-                    }
-                />
+      <form onSubmit={handleSaveProfile} className="bg-white p-6 rounded-md shadow-sm mb-6">
+        <h2 className="text-lg font-medium mb-4">Account info</h2>
 
-                <label>Địa chỉ</label>
-                <input
-                    value={form.address}
-                    onChange={(e) =>
-                        setForm({ ...form, address: e.target.value })
-                    }
-                />
+        <div className="grid grid-cols-1 gap-4">
+          <label className="flex flex-col">
+            <span className="text-sm text-gray-600">Name</span>
+            <input
+              className="mt-1 border px-3 py-2 rounded-md"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </label>
 
-                <button type="submit">💾 Lưu thông tin</button>
-            </form>
+          <label className="flex flex-col">
+            <span className="text-sm text-gray-600">Email</span>
+            <input
+              className="mt-1 border px-3 py-2 rounded-md"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </label>
 
-            {/* ===== PASSWORD ===== */}
-            <form className="password-form" onSubmit={handleChangePassword}>
-                <h3>🔐 Đổi mật khẩu</h3>
-
-                <input
-                    type="password"
-                    placeholder="Mật khẩu cũ"
-                    value={passwordForm.oldPassword}
-                    onChange={(e) =>
-                        setPasswordForm({
-                            ...passwordForm,
-                            oldPassword: e.target.value
-                        })
-                    }
-                />
-
-                <input
-                    type="password"
-                    placeholder="Mật khẩu mới"
-                    value={passwordForm.newPassword}
-                    onChange={(e) =>
-                        setPasswordForm({
-                            ...passwordForm,
-                            newPassword: e.target.value
-                        })
-                    }
-                />
-
-                <button type="submit">Đổi mật khẩu</button>
-            </form>
+          <div className="pt-4">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md"
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Save changes'}
+            </button>
+          </div>
         </div>
-    );
+      </form>
+
+      <form onSubmit={handleChangePassword} className="bg-white p-6 rounded-md shadow-sm">
+        <h2 className="text-lg font-medium mb-4">Change password</h2>
+
+        <div className="grid grid-cols-1 gap-4">
+          <label className="flex flex-col">
+            <span className="text-sm text-gray-600">Current password</span>
+            <input
+              type="password"
+              className="mt-1 border px-3 py-2 rounded-md"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+          </label>
+
+          <label className="flex flex-col">
+            <span className="text-sm text-gray-600">New password</span>
+            <input
+              type="password"
+              className="mt-1 border px-3 py-2 rounded-md"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </label>
+
+          <label className="flex flex-col">
+            <span className="text-sm text-gray-600">Confirm new password</span>
+            <input
+              type="password"
+              className="mt-1 border px-3 py-2 rounded-md"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </label>
+
+          <div className="pt-4">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md"
+              disabled={pwLoading}
+            >
+              {pwLoading ? 'Changing...' : 'Change password'}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
 }

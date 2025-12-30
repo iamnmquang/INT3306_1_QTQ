@@ -21,11 +21,75 @@ async function main() {
 
   console.log('Seeded admin user:', admin);
 
+  await prisma.seatDetail.deleteMany();
+await prisma.flightSeat.deleteMany();
+await prisma.flight.deleteMany();
+
 
    const airportsData = [
     { name: 'Noi Bai International Airport', iataCode: 'HAN', icaoCode: 'VVNB', country: 'Vietnam', city: 'Hanoi', latitude: 21.2212, longitude: 105.8072, type: 'international' },
     { name: 'Tan Son Nhat International Airport', iataCode: 'SGN', icaoCode: 'VVTS', country: 'Vietnam', city: 'Ho Chi Minh City', latitude: 10.8188, longitude: 106.6518, type: 'international' },
     { name: 'Da Nang International Airport', iataCode: 'DAD', icaoCode: 'VVDN', country: 'Vietnam', city: 'Da Nang', latitude: 16.0439, longitude: 108.199, type: 'international' },
+    { 
+    name: 'Cam Ranh International Airport', 
+    iataCode: 'CXR', 
+    icaoCode: 'VVCR', 
+    country: 'Vietnam', 
+    city: 'Khanh Hoa', 
+    latitude: 11.9982, 
+    longitude: 109.2196, 
+    type: 'international' 
+  },
+  { 
+    name: 'Phu Quoc International Airport', 
+    iataCode: 'PQC', 
+    icaoCode: 'VVPQ', 
+    country: 'Vietnam', 
+    city: 'Phu Quoc', 
+    latitude: 10.1698, 
+    longitude: 103.9931, 
+    type: 'international' 
+  },
+  { 
+    name: 'Cat Bi International Airport', 
+    iataCode: 'HPH', 
+    icaoCode: 'VVCI', 
+    country: 'Vietnam', 
+    city: 'Hai Phong', 
+    latitude: 20.8194, 
+    longitude: 106.7249, 
+    type: 'international' 
+  },
+  { 
+    name: 'Can Tho International Airport', 
+    iataCode: 'VCA', 
+    icaoCode: 'VVCT', 
+    country: 'Vietnam', 
+    city: 'Can Tho', 
+    latitude: 10.0851, 
+    longitude: 105.7119, 
+    type: 'international' 
+  },
+  { 
+    name: 'Lien Khuong Airport', 
+    iataCode: 'DLI', 
+    icaoCode: 'VVDL', 
+    country: 'Vietnam', 
+    city: 'Da Lat', 
+    latitude: 11.7506, 
+    longitude: 108.3738, 
+    type: 'domestic' 
+  },
+  { 
+    name: 'Vinh International Airport', 
+    iataCode: 'VII', 
+    icaoCode: 'VVVH', 
+    country: 'Vietnam', 
+    city: 'Vinh', 
+    latitude: 18.7376, 
+    longitude: 105.6711, 
+    type: 'domestic' 
+  }
   ];
 
    const airports = [];
@@ -54,39 +118,116 @@ async function main() {
   }
 
 
-   const flight = await prisma.flight.create({
-    data: {
-      flightNumber: "VN123",
-      departureTime: new Date("2025-02-01T08:00:00.000Z"),
-      arrivalTime: new Date("2025-02-01T10:00:00.000Z"),
-      arrivalAirportId: airports[0].id,   // HAN
+  const today = new Date();
+const y = today.getUTCFullYear();
+const m = today.getUTCMonth();
+const d = today.getUTCDate();
+
+// Create flights for today and tomorrow with varied times and routes
+const tomorrow = new Date(Date.UTC(y, m, d + 1, 0, 0));
+await prisma.flight.createMany({
+  data: [
+    // SGN → HAN (early)
+    {
+      flightNumber: "VN801",
+      departureTime: new Date(Date.UTC(y, m, d, 1, 0)),
+      arrivalTime: new Date(Date.UTC(y, m, d, 3, 0)),
       departureAirportId: airports[1].id, // SGN
-      aircraftId: aircrafts[0].id         // Airbus A321
+      arrivalAirportId: airports[0].id,   // HAN
+      aircraftId: aircrafts[0].id
     },
-  });
 
-  console.log("✔ Seeded flight:", flight.flightNumber);
+    // HAN → DAD (morning)
+    {
+      flightNumber: "VN225",
+      departureTime: new Date(Date.UTC(y, m, d, 4, 0)),
+      arrivalTime: new Date(Date.UTC(y, m, d, 5, 20)),
+      departureAirportId: airports[0].id, // HAN
+      arrivalAirportId: airports[2].id,   // DAD
+      aircraftId: aircrafts[1].id
+    },
 
-  const flightSeatsData = [
-    { seatClass: "ECONOMY", totalSeats: 120, bookedSeats: 0, price: 100.0 },
-    { seatClass: "BUSINESS", totalSeats: 40, bookedSeats: 0, price: 300.0 }
-  ];
+    // DAD → SGN (mid morning)
+    {
+      flightNumber: "VJC630",
+      departureTime: new Date(Date.UTC(y, m, d, 6, 0)),
+      arrivalTime: new Date(Date.UTC(y, m, d, 7, 30)),
+      departureAirportId: airports[2].id, // DAD
+      arrivalAirportId: airports[1].id,   // SGN
+      aircraftId: aircrafts[0].id
+    },
 
-  const flightSeats = [];
+    // SGN → CXR (midday)
+    {
+      flightNumber: "BL412",
+      departureTime: new Date(Date.UTC(y, m, d, 8, 0)),
+      arrivalTime: new Date(Date.UTC(y, m, d, 9, 10)),
+      departureAirportId: airports[1].id, // SGN
+      arrivalAirportId: airports[3].id,   // CXR
+      aircraftId: aircrafts[0].id
+    },
 
-  for (const fs of flightSeatsData) {
+    // PQC → HAN (afternoon)
+    {
+      flightNumber: "VN916",
+      departureTime: new Date(Date.UTC(y, m, d, 12, 0)),
+      arrivalTime: new Date(Date.UTC(y, m, d, 14, 30)),
+      departureAirportId: airports[4].id, // PQC
+      arrivalAirportId: airports[0].id,   // HAN
+      aircraftId: aircrafts[1].id
+    },
+
+    // Additional: HAN → SGN (evening)
+    {
+      flightNumber: "VN700",
+      departureTime: new Date(Date.UTC(y, m, d, 14, 0)),
+      arrivalTime: new Date(Date.UTC(y, m, d, 16, 0)),
+      departureAirportId: airports[0].id,
+      arrivalAirportId: airports[1].id,
+      aircraftId: aircrafts[0].id
+    },
+
+    // Additional: SGN → HAN (late night, tomorrow)
+    {
+      flightNumber: "VN999",
+      departureTime: new Date(Date.UTC(y, m, d + 1, 1, 0)),
+      arrivalTime: new Date(Date.UTC(y, m, d + 1, 3, 0)),
+      departureAirportId: airports[1].id,
+      arrivalAirportId: airports[0].id,
+      aircraftId: aircrafts[1].id
+    }
+  ],
+});
+
+const flights = await prisma.flight.findMany({ orderBy: { departureTime: 'asc' } });
+
+  
+
+  const baseSeats = [
+  { seatClass: "ECONOMY", totalSeats: 120, basePrice: 100 },
+  { seatClass: "BUSINESS", totalSeats: 40, basePrice: 300 },
+];
+
+const flightSeats = [];
+
+for (let i = 0; i < flights.length; i++) {
+  const flight = flights[i];
+  // vary price by flight index so we have ranges to test
+  for (const bs of baseSeats) {
+    const priceOffset = i * (bs.seatClass === 'ECONOMY' ? 50 : 100);
     const created = await prisma.flightSeat.create({
       data: {
-        seatClass: fs.seatClass,
-        totalSeats: fs.totalSeats,
+        seatClass: bs.seatClass,
+        totalSeats: bs.totalSeats,
         bookedSeats: 0,
-        price: fs.price,
+        price: bs.basePrice + priceOffset,
         flightId: flight.id,
-      }
+      },
     });
 
     flightSeats.push(created);
   }
+}
 
   console.log(`✔ Seeded ${flightSeats.length} flight seat groups.`);
 

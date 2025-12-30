@@ -20,6 +20,8 @@ const PassengerService = {
     });
   },
 
+
+
   update: async (id, data) => {
     return await prisma.passenger.update({
       where: { id },

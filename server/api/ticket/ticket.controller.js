@@ -181,6 +181,15 @@ const TicketController = {
       const tickets = await TicketService.confirmBookings(userId, bookingData);
       console.log(tickets);
 
+      // fire-and-forget: send e-ticket to user if logged in
+      try {
+        const bookingRef = tickets?.[0]?.bookingReference;
+        if (userId && bookingRef) {
+          TicketService.sendETicket(userId, bookingRef).catch((e) => console.error('sendETicket failed', e));
+        }
+      } catch (e) {
+        console.error('Error initiating sendETicket', e);
+      }
 
       res.status(201).json({
         message: `${tickets.length} tickets created successfully`,
@@ -210,7 +219,7 @@ const TicketController = {
     } catch (err) {
       res.status(400).json({ message: 'Error send tickets', error: err.message });
     }
-  }
+  },
 };
 
 module.exports = TicketController;

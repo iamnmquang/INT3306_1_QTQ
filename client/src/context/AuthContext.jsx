@@ -1,86 +1,181 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import axios from "../services/axios"; // axios của bạn
+// src/context/AuthContext.jsx
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api, { setAccessToken } from '../api/axios';
+import { authApi } from '../api/authApi';
+import { userApi } from '../api/userApi';
+
 
 const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(() => {
+    try {
+      const raw = localStorage.getItem('user');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(true);
 
-    /**
-     * Lấy thông tin user hiện tại
-     */
-    const fetchMe = async () => {
-        try {
-            const res = await axios.get("/auth/me");
-            setUser(res.data);
-        } catch (err) {
-            setUser(null);
-        } finally {
-            setLoading(false);
+  const navigate = useNavigate();
+
+  // Initialize session: attempt refresh -> fetch profile
+  useEffect(() => {
+    let mounted = true;
+
+    const init = async () => {
+      setLoading(true);
+      try {
+        // Try to get a new access token using refresh token cookie
+        const refreshRes = await authApi.refreshToken();
+        if (refreshRes?.accessToken) {
+          setAccessToken(refreshRes.accessToken);
         }
+
+        // Fetch the current profile (server may return { user } or the user object)
+        const profileRes = await userApi.getProfile();
+        const currentUser = profileRes.user || profileRes;
+
+        if (!mounted) return;
+        setUser(currentUser);
+        localStorage.setItem('user', JSON.stringify(currentUser));
+        localStorage.setItem('isLoggedIn', 'true');
+      } catch (err) {
+        // If refresh fails, clear local session
+        setAccessToken(null);
+        setUser(null);
+        localStorage.removeItem('user');
+        localStorage.removeItem('isLoggedIn');
+      } finally {
+        if (mounted) setLoading(false);
+      }
     };
 
-    /**
-     * Chạy khi F5 / reload
-     */
-    useEffect(() => {
-        if (localStorage.getItem("accessToken")) {
-            fetchMe();
-        } else {
-            setLoading(false);
-        }
-    }, []);
+    init();
 
-    /**
-     * LOGIN
-     */
-    const login = async (email, password) => {
-        const res = await axios.post("/auth/login", { email, password });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-        // Backend trả token
-        const { accessToken, refreshToken } = res.data;
-
-        // Lưu accessToken (axios interceptor sẽ dùng)
-        localStorage.setItem("accessToken", accessToken);
-
-        // (optional) nếu bạn muốn lưu refreshToken
-        if (refreshToken) {
-            localStorage.setItem("refreshToken", refreshToken);
-        }
-
-        await fetchMe();
-        return res.data;
+  // Keep state in sync across tabs/windows
+  useEffect(() => {
+    const onLogin = () => {
+      try {
+        const raw = localStorage.getItem('user');
+        if (raw) setUser(JSON.parse(raw));
+      } catch {
+        setUser(null);
+      }
     };
 
-    /**
-     * LOGOUT
-     */
-    const logout = async () => {
-        try {
-            await axios.post("/auth/logout");
-        } catch (err) {
-            // ignore
-        } finally {
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-            setUser(null);
-        }
+    const onLogout = () => {
+      setUser(null);
     };
 
-    return (
-        <AuthContext.Provider
-            value={{
-                user,
-                setUser,
-                loading,
-                login,
-                logout
-            }}
-        >
-            {children}
-        </AuthContext.Provider>
+    const onUpdate = () => {
+      try {
+        const raw = localStorage.getItem('user');
+        if (raw) setUser(JSON.parse(raw));
+      } catch {
+        // ignore
+      }
+    };
+
+    window.addEventListener('userLogin', onLogin);
+    window.addEventListener('userLogout', onLogout);
+    window.addEventListener('userUpdate', onUpdate);
+
+    return () => {
+      window.removeEventListener('userLogin', onLogin);
+      window.removeEventListener('userLogout', onLogout);
+      window.removeEventListener('userUpdate', onUpdate);
+    };
+  }, []);
+
+  // Register interceptor to force logout when refresh fails
+  useEffect(() => {
+    const interceptor = api.interceptors.response.use(
+      (res) => res,
+      (error) => {
+        if (error?.isRefreshFailed) {
+          // cleanup local session and navigate to login
+          setAccessToken(null);
+          setUser(null);
+          localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('user');
+          window.dispatchEvent(new Event('userLogout'));
+          navigate('/login');
+        }
+        return Promise.reject(error);
+      }
     );
-};
 
-export const useAuth = () => useContext(AuthContext);
+    return () => api.interceptors.response.eject(interceptor);
+  }, [navigate]);
+
+  const login = useCallback(async (email, password) => {
+    const data = await authApi.login(email, password);
+    const accessToken = data.accessToken || data.token || null;
+    const currentUser = data.user || data;
+
+    if (accessToken) setAccessToken(accessToken);
+    setUser(currentUser);
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('user', JSON.stringify(currentUser));
+    window.dispatchEvent(new Event('userLogin'));
+
+    return currentUser;
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout();
+    } catch (err) {
+      // ignore errors on logout
+    }
+
+    setAccessToken(null);
+    setUser(null);
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('user');
+    window.dispatchEvent(new Event('userLogout'));
+    navigate('/');
+  }, [navigate]);
+
+  // Update user locally (and notify other components)
+  const updateUser = useCallback((userData) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+    window.dispatchEvent(new Event('userUpdate'));
+  }, []);
+
+  // Use userApi for changing password (authenticated flow)
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
+    return userApi.changePassword(currentPassword, newPassword);
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{
+      user,
+      login,
+      logout,
+      loading,
+      isAuthenticated: !!user,
+      updateUser,
+      changePassword,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+};

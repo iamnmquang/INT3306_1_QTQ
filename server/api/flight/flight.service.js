@@ -39,25 +39,53 @@ const FlightService = {
     return prisma.flight.delete({ where: { id } });
   },
 
-  searchFlights: async (departureCity, arrivalCity, departureTime, passengerNum) => {
+searchFlights: async (departureCity, arrivalCity, departureTime, passengerNum) => {
     const startOfDay = new Date(departureTime);
     startOfDay.setHours(0, 0, 0, 0);
 
     const endOfDay = new Date(departureTime);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // return all fights matching criteria
+    // Build flexible airport match by querying airports first
+    const buildAirportMatch = async (val) => {
+      if (!val) return [];
+      const v = val.trim().toUpperCase();
+      const airports = await prisma.airport.findMany({
+        where: {
+          OR: [
+            { city: { contains: v } },
+            { iataCode: { contains: v } },
+          ],
+        },
+        select: { id: true },
+      });
+      return airports.map(a => a.id);
+    };
+
+    const departureAirportIds = await buildAirportMatch(departureCity);
+    const arrivalAirportIds = await buildAirportMatch(arrivalCity);
+
+     // Debug: Log airport IDs found
+    console.log('Departure airport IDs:', departureAirportIds);
+    console.log('Arrival airport IDs:', arrivalAirportIds);
+
+    // If no airports found, throw error
+    if (departureAirportIds.length === 0 || arrivalAirportIds.length === 0) {
+      throw new Error(`No airports found. Departure: ${departureCity}, Arrival: ${arrivalCity}`);
+    }
+
+    // return all flights matching criteria
     const flights = await prisma.flight.findMany({
       where: {
-        departureAirport: { city: departureCity },
-        arrivalAirport: { city: arrivalCity },
+        ...(departureAirportIds.length > 0 ? { departureAirportId: { in: departureAirportIds } } : {}),
+        ...(arrivalAirportIds.length > 0 ? { arrivalAirportId: { in: arrivalAirportIds } } : {}),
         departureTime: {
           gte: startOfDay,
-          lte: endOfDay
+          lte: endOfDay,
         },
         status: {
-          not: 'CANCELLED'
-        }
+          not: 'CANCELLED',
+        },
       },
       include: {
         departureAirport: true,
@@ -78,7 +106,7 @@ const FlightService = {
       },
       orderBy: {
         departureTime: 'asc',
-      }
+      },
     });
 
     // filter flights that have enough available seats
@@ -93,14 +121,13 @@ const FlightService = {
 
     const cleanedFlights = flightsWithAvailableSeats.map((flight) => {
       flight.flightSeats = flight.flightSeats.map(flightSeat => {
-        const {seats, ...rest} = flightSeat;
+        const { seats, ...rest } = flightSeat;
         return rest;
-      })
+      });
       return flight;
-    })
+    });
 
     return cleanedFlights;
-  },
-
+  }
 };
 module.exports = FlightService;

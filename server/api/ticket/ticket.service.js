@@ -195,7 +195,8 @@ const TicketService = {
 
   //confirm booking and create a ticket
   confirmBookings: async (userId, bookingData) => {
-    await prisma.$transaction(async (tx) => {
+    // Return the created tickets from the transaction so the controller receives them
+    return await prisma.$transaction(async (tx) => {
       const createdTickets = [];
 
       const bookingRef = generateBookingReference();
@@ -220,7 +221,16 @@ const TicketService = {
 
         const flight = await tx.flight.findUnique({where: {id: flightId}})
 
-        const passenger = await tx.passenger.create({ data: passengerData });
+        // Support using existing passengerId if provided, otherwise create a passenger
+        let passengerIdToUse;
+        if (b.passengerId) {
+          const existing = await tx.passenger.findUnique({ where: { id: b.passengerId } });
+          if (!existing) throw new Error(`Passenger ${b.passengerId} not found`);
+          passengerIdToUse = existing.id;
+        } else {
+          const passenger = await tx.passenger.create({ data: passengerData });
+          passengerIdToUse = passenger.id;
+        }
 
         //create ticket
         const ticket = await tx.ticket.create({
@@ -231,7 +241,7 @@ const TicketService = {
             flightId,
             flightSeatId,
             seatDetailId,
-            passengerId: passenger.id,
+            passengerId: passengerIdToUse,
             seatNumber: seat.seatNumber
           }
         });
@@ -259,6 +269,8 @@ const TicketService = {
       return createdTickets;
     });
   },
+
+  
 
 
   generateETicketPDF: async (ticket, passenger, flight) => {
@@ -556,14 +568,11 @@ const TicketService = {
 
     const tickets = await TicketService.getByBookingReference(bookingRef)
 
-    if (tickets.length === 0) {
-      return res.status(404).json({
-        message: "Booking not found"
-      });
+    if (!tickets || tickets.length === 0) {
+      throw new Error('Booking not found');
     }
 
-
-    //generate all ppdf tickets
+    //generate all pdf tickets
     const pdfFiles = []
     for (const t of tickets) {
       const pdfBuffer = await TicketService.generateETicketPDF(t, t.passenger, t.flight);
@@ -576,7 +585,6 @@ const TicketService = {
     }
 
     //send email with all attachments
-
     await sendEmail({
       to: user.email,
       subject: `Your E-Ticket - Booking ${bookingRef}`,
@@ -588,6 +596,8 @@ const TicketService = {
       },
       attachments: pdfFiles
     })
+
+    return { sent: true, count: tickets.length };
   }
 };
 
