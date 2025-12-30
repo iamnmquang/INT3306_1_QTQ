@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Người dùng | QTQ Airline</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; }
+        .tier-diamond { color: #a855f7; background: rgba(168, 85, 247, 0.1); border: 1px solid #a855f7; }
+        .tier-gold { color: #fbbf24; background: rgba(251, 191, 36, 0.1); border: 1px solid #fbbf24; }
+        .tier-silver { color: #94a3b8; background: rgba(148, 163, 184, 0.1); border: 1px solid #94a3b8; }
+        .modal { transition: opacity 0.25s ease; }
+        body.modal-active { overflow: hidden; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4">
+
+    <header class="flex justify-between items-center mb-6 bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+        <div class="flex items-center gap-4">
+            <a href="dashboard.html" class="text-blue-400 hover:text-blue-300 transition no-underline">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="text-2xl font-bold text-blue-400">👤 Quản lý Thành viên</div>
+        </div>
+        <div class="flex items-center gap-4">
+            <button onclick="openModal('add')" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-bold transition shadow-lg shadow-blue-900/20">
+                <i class="fas fa-user-plus mr-2"></i> Thêm Khách hàng
+            </button>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 text-center">
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+            <p class="text-gray-400 text-xs uppercase font-bold">Tổng thành viên</p>
+            <p id="total-users" class="text-2xl font-bold text-white mt-1">12,850</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+            <p class="text-gray-400 text-xs uppercase font-bold">Thành viên VIP</p>
+            <p class="text-2xl font-bold text-orange-400 mt-1">452</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+            <p class="text-gray-400 text-xs uppercase font-bold">Mới/Tháng</p>
+            <p class="text-2xl font-bold text-green-400 mt-1">+1,205</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+            <p class="text-gray-400 text-xs uppercase font-bold">Đang Online</p>
+            <p class="text-2xl font-bold text-blue-400 mt-1">158</p>
+        </div>
+    </div>
+
+    <div class="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-5">
+        <div class="flex flex-col md:flex-row justify-between mb-6 gap-4">
+            <div class="flex gap-2">
+                <input type="text" id="user-search" placeholder="Tìm tên, email hoặc ID..." 
+                    class="bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-sm w-full md:w-80 focus:ring-2 focus:ring-blue-500 outline-none text-gray-200">
+                <select id="filter-tier" class="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm text-gray-200 outline-none">
+                    <option value="">Tất cả hạng thẻ</option>
+                    <option value="Diamond">Diamond</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Silver">Silver</option>
+                </select>
+            </div>
+            <button onclick="exportExcel()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-md text-sm transition">
+                <i class="fas fa-file-export mr-2"></i> Xuất Excel
+            </button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="text-xs text-gray-400 uppercase bg-gray-700/50">
+                    <tr>
+                        <th class="px-6 py-4">Khách hàng</th>
+                        <th class="px-6 py-4">Hạng thẻ</th>
+                        <th class="px-6 py-4">Tổng dặm (km)</th>
+                        <th class="px-6 py-4">Trạng thái</th>
+                        <th class="px-6 py-4 text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="user-table-body" class="divide-y divide-gray-700">
+                    <tr class="hover:bg-gray-700/30 transition">
+                        <td class="px-6 py-4 font-bold text-white">Nguyễn Văn Nam<br><span class="text-xs font-normal text-gray-400">nam.nguyen@gmail.com</span></td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 rounded text-[10px] font-bold uppercase tier-diamond">Diamond</span></td>
+                        <td class="px-6 py-4 font-mono">45,200</td>
+                        <td class="px-6 py-4 text-green-400"><i class="fas fa-circle text-[8px] mr-2"></i>Hoạt động</td>
+                        <td class="px-6 py-4 text-right space-x-3">
+                            <button onclick="openModal('edit', 'Nguyễn Văn Nam')" class="text-blue-400 hover:text-blue-300"><i class="fas fa-edit"></i></button>
+                            <button onclick="toggleLock(this)" class="text-gray-400 hover:text-red-400"><i class="fas fa-lock"></i></button>
+                        </td>
+                    </tr>
+                    <tr class="hover:bg-gray-700/30 transition">
+                        <td class="px-6 py-4 font-bold text-white">Lê Hồng Hạnh<br><span class="text-xs font-normal text-gray-400">hanh.le@outlook.com</span></td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 rounded text-[10px] font-bold uppercase tier-gold">Gold</span></td>
+                        <td class="px-6 py-4 font-mono">12,800</td>
+                        <td class="px-6 py-4 text-green-400"><i class="fas fa-circle text-[8px] mr-2"></i>Hoạt động</td>
+                        <td class="px-6 py-4 text-right space-x-3">
+                            <button onclick="openModal('edit', 'Lê Hồng Hạnh')" class="text-blue-400 hover:text-blue-300"><i class="fas fa-edit"></i></button>
+                            <button onclick="toggleLock(this)" class="text-gray-400 hover:text-red-400"><i class="fas fa-lock"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="userModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div class="bg-gray-800 border border-gray-700 w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h3 id="modalTitle" class="text-xl font-bold text-blue-400">Thêm khách hàng mới</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="userForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Họ và Tên</label>
+                    <input type="text" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 outline-none focus:border-blue-500 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Email</label>
+                    <input type="email" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 outline-none focus:border-blue-500 text-white">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Hạng thẻ</label>
+                        <select class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white outline-none">
+                            <option>Silver</option>
+                            <option>Gold</option>
+                            <option>Diamond</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Số dặm</label>
+                        <input type="number" value="0" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white outline-none">
+                    </div>
+                </div>
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded font-bold transition">Hủy</button>
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-500 py-2 rounded font-bold transition">Lưu dữ liệu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 1. CHỨC NĂNG TÌM KIẾM & LỌC
+        const searchInput = document.getElementById('user-search');
+        const filterTier = document.getElementById('filter-tier');
+
+        function performFilter() {
+            const term = searchInput.value.toLowerCase();
+            const tier = filterTier.value.toLowerCase();
+            const rows = document.querySelectorAll('#user-table-body tr');
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const matchesSearch = text.includes(term);
+                const matchesTier = tier === "" || text.includes(tier);
+                row.style.display = (matchesSearch && matchesTier) ? '' : 'none';
+            });
+        }
+
+        searchInput.addEventListener('input', performFilter);
+        filterTier.addEventListener('change', performFilter);
+
+        // 2. CHỨC NĂNG MODAL
+        function openModal(type, name = "") {
+            const modal = document.getElementById('userModal');
+            const title = document.getElementById('modalTitle');
+            modal.classList.remove('hidden');
+            if(type === 'edit') {
+                title.innerText = "Chỉnh sửa: " + name;
+            } else {
+                title.innerText = "Thêm khách hàng mới";
+                document.getElementById('userForm').reset();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('userModal').classList.add('hidden');
+        }
+
+        // 3. XỬ LÝ FORM SUBMIT
+        document.getElementById('userForm').onsubmit = function(e) {
+            e.preventDefault();
+            closeModal();
+            Swal.fire({
+                title: 'Thành công!',
+                text: 'Dữ liệu thành viên đã được cập nhật.',
+                icon: 'success',
+                background: '#1f2937',
+                color: '#fff',
+                confirmButtonColor: '#2563eb'
+            });
+        };
+
+        // 4. CHỨC NĂNG KHÓA / MỞ KHÓA
+        function toggleLock(btn) {
+            const icon = btn.querySelector('i');
+            const isLocked = icon.classList.contains('fa-lock-open');
+
+            Swal.fire({
+                title: isLocked ? 'Mở khóa tài khoản?' : 'Khóa tài khoản này?',
+                text: "Trạng thái truy cập của người dùng sẽ thay đổi!",
+                icon: 'warning',
+                showCancelButton: true,
+                background: '#1f2937',
+                color: '#fff',
+                confirmButtonColor: isLocked ? '#10b981' : '#ef4444',
+                confirmButtonText: 'Xác nhận'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (isLocked) {
+                        icon.className = 'fas fa-lock';
+                        btn.className = 'text-gray-400 hover:text-red-400';
+                        Swal.fire({ title: 'Đã mở khóa!', icon: 'success', background: '#1f2937', color: '#fff' });
+                    } else {
+                        icon.className = 'fas fa-lock-open';
+                        btn.className = 'text-red-500 hover:text-red-400';
+                        Swal.fire({ title: 'Đã khóa tài khoản!', icon: 'error', background: '#1f2937', color: '#fff' });
+                    }
+                }
+            });
+        }
+
+        // 5. XUẤT EXCEL (GIẢ LẬP)
+        function exportExcel() {
+            Swal.fire({
+                title: 'Đang trích xuất...',
+                timer: 1500,
+                timerProgressBar: true,
+                background: '#1f2937',
+                color: '#fff',
+                didOpen: () => Swal.showLoading()
+            }).then(() => {
+                Swal.fire({ title: 'Hoàn tất!', text: 'File report_users.xlsx đã được tải xuống.', icon: 'success', background: '#1f2937', color: '#fff' });
+            });
+        }
+    </script>
+</body>
+</html>

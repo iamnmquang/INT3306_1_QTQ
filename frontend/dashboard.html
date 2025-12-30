@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .glass {
+            background: rgba(31, 41, 55, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-dot {
+            height: 8px;
+            width: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4">
+
+    <header class="flex justify-between items-center mb-6 bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+        <div class="flex items-center gap-4">
+            <div class="text-2xl font-bold text-blue-400">✈️ QTQ AIRLINE</div>
+            <div class="text-sm text-gray-400">| <span id="current-time">Đang tải...</span></div>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center font-bold">AD</div>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-12 gap-6">
+
+        <div class="col-span-12 lg:col-span-8 flex flex-col gap-6">
+
+            <div class="bg-gray-800 rounded-lg p-5 shadow-lg border border-gray-700">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg text-white">🛫 Bảng theo dõi chuyến bay trực tiếp</h3>
+                    <a href="flight.html"
+                        class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm text-white no-underline flex items-center justify-center">Xem
+                        tất cả</a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-300">
+                        <thead class="text-xs text-gray-400 uppercase bg-gray-700">
+                            <tr>
+                                <th class="px-4 py-3">Chuyến bay</th>
+                                <th class="px-4 py-3">Đi/Đến</th>
+                                <th class="px-4 py-3">Giờ</th>
+                                <th class="px-4 py-3">Cổng/Băng</th>
+                                <th class="px-4 py-3">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-700 hover:bg-gray-700">
+                                <td class="px-4 py-3 font-bold text-white">VN 214</td>
+                                <td class="px-4 py-3">Hanoi (HAN)</td>
+                                <td class="px-4 py-3">14:30</td>
+                                <td class="px-4 py-3">G04</td>
+                                <td class="px-4 py-3"><span
+                                        class="bg-green-900 text-green-300 py-1 px-2 rounded text-xs">Đã cất cánh</span>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-700 hover:bg-gray-700 bg-red-900/20">
+                                <td class="px-4 py-3 font-bold text-white">VJ 551</td>
+                                <td class="px-4 py-3">Da Nang (DAD)</td>
+                                <td class="px-4 py-3">14:45</td>
+                                <td class="px-4 py-3">G08</td>
+                                <td class="px-4 py-3"><span
+                                        class="bg-red-900 text-red-300 py-1 px-2 rounded text-xs">Delay (30p)</span>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-700 hover:bg-gray-700">
+                                <td class="px-4 py-3 font-bold text-white">QH 102</td>
+                                <td class="px-4 py-3">Ho Chi Minh (SGN)</td>
+                                <td class="px-4 py-3">15:00</td>
+                                <td class="px-4 py-3">G02</td>
+                                <td class="px-4 py-3"><span
+                                        class="bg-yellow-900 text-yellow-300 py-1 px-2 rounded text-xs">Đang gọi
+                                        khách</span></td>
+                            </tr>
+                            <tr class="border-b border-gray-700 hover:bg-gray-700">
+                                <td class="px-4 py-3 font-bold text-white">VN 118</td>
+                                <td class="px-4 py-3">Seoul (ICN)</td>
+                                <td class="px-4 py-3">15:15</td>
+                                <td class="px-4 py-3">G10</td>
+                                <td class="px-4 py-3"><span
+                                        class="bg-blue-900 text-blue-300 py-1 px-2 rounded text-xs">Đúng giờ</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-5 shadow-lg border border-gray-700 bg-gradient-to-br from-gray-800 to-gray-900">
+    <div class="flex justify-between items-center mb-5">
+        <div>
+            <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                <i class="fas fa-users-gear text-blue-400"></i> Quản lý Thành viên
+            </h3>
+            <p class="text-xs text-gray-400 mt-1">Đang có 158 thành viên trực tuyến</p>
+        </div>
+        <a href="user.html" class="text-blue-400 hover:text-blue-300 text-sm font-semibold transition flex items-center gap-1">
+            Xem tất cả <i class="fas fa-chevron-right text-[10px]"></i>
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-gray-700/30 p-3 rounded-lg border border-gray-600 hover:border-blue-500/50 transition group">
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs">NV</div>
+                    <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-gray-800 rounded-full"></span>
+                </div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-bold text-white truncate">Nguyễn Văn Nam</p>
+                    <p class="text-[10px] text-orange-400 font-bold uppercase tracking-wider">Diamond Member</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-700/30 p-3 rounded-lg border border-gray-600 hover:border-blue-500/50 transition group">
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center font-bold text-xs">LH</div>
+                    <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-gray-800 rounded-full"></span>
+                </div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-bold text-white truncate">Lê Hồng Hạnh</p>
+                    <p class="text-[10px] text-yellow-500 font-bold uppercase tracking-wider">Gold Member</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-700/30 p-3 rounded-lg border border-gray-600 hover:border-blue-500/50 transition group border-dashed flex items-center justify-center">
+            <a href="user.html" class="text-gray-500 group-hover:text-blue-400 text-xs font-medium flex flex-col items-center gap-1">
+                <i class="fas fa-plus-circle text-lg"></i>
+                <span>Quản lý thêm</span>
+            </a>
+        </div>
+    </div>
+    
+    <div class="mt-5 pt-4 border-t border-gray-700/50 flex items-center justify-between">
+        <div class="flex -space-x-2">
+            <div class="w-7 h-7 rounded-full border-2 border-gray-800 bg-gray-600 flex items-center justify-center text-[10px]">A</div>
+            <div class="w-7 h-7 rounded-full border-2 border-gray-800 bg-gray-500 flex items-center justify-center text-[10px]">B</div>
+            <div class="w-7 h-7 rounded-full border-2 border-gray-800 bg-gray-400 flex items-center justify-center text-[10px]">C</div>
+            <div class="w-7 h-7 rounded-full border-2 border-gray-800 bg-blue-600 flex items-center justify-center text-[10px] font-bold">+12</div>
+        </div>
+        <p class="text-[11px] text-gray-500">Tăng trưởng khách hàng mới: <span class="text-green-400">+15% tháng này</span></p>
+    </div>
+</div>
+
+            <div class="bg-gray-800 rounded-lg p-5 shadow-lg border border-gray-700">
+                <h3 class="font-bold text-lg mb-4 text-white flex items-center gap-2">
+                    <i class="fas fa-newspaper text-cyan-400"></i> Quản lý Bài viết (CMS)
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                    <div class="p-3 bg-gray-700 rounded-md border-l-4 border-cyan-500">
+                        <div class="text-xs text-gray-400 uppercase">Đã Xuất bản</div>
+                        <div class="text-2xl font-bold text-cyan-300 mt-1">45</div>
+                    </div>
+                    <div class="p-3 bg-gray-700 rounded-md border-l-4 border-yellow-500">
+                        <div class="text-xs text-gray-400 uppercase">Chờ Duyệt/Sửa</div>
+                        <div class="text-2xl font-bold text-yellow-300 mt-1">05</div>
+                    </div>
+                    <div class="p-3 bg-gray-700 rounded-md border-l-4 border-red-500">
+                        <div class="text-xs text-gray-400 uppercase">Cần Cập nhật khẩn</div>
+                        <div class="text-2xl font-bold text-red-300 mt-1">01</div>
+                    </div>
+                </div>
+
+                <h4 class="font-bold text-base text-gray-200 mb-3">5 Bài viết cần hành động:</h4>
+                <div class="space-y-3 max-h-48 overflow-y-auto pr-2">
+                    <div
+                        class="flex justify-between items-center p-2 bg-gray-700/50 rounded border-l-4 border-yellow-400 hover:bg-gray-700 transition">
+                        <div>
+                            <p class="text-sm font-bold text-gray-200">Ưu đãi Tết 2026: Bay cùng Gia đình</p>
+                            <p class="text-xs text-yellow-400">Người viết: Mai Anh | Chờ duyệt</p>
+                        </div>
+                        <button class="text-blue-400 text-xs hover:text-blue-300">Duyệt</button>
+                    </div>
+                    <div
+                        class="flex justify-between items-center p-2 bg-gray-700/50 rounded border-l-4 border-red-400 hover:bg-gray-700 transition">
+                        <div>
+                            <p class="text-sm font-bold text-gray-200">Quy định về Hành lý ký gửi</p>
+                            <p class="text-xs text-red-400">Cần sửa đổi QĐ 4.2 khẩn</p>
+                        </div>
+                        <button class="text-blue-400 text-xs hover:text-blue-300">Sửa</button>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-left">
+                    <a href="post.html"
+                        class="inline-flex items-center bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-4 py-2 rounded-lg text-sm transition shadow-md shadow-cyan-500/30">
+                        <i class="fas fa-pen-to-square mr-2"></i> Chi tiết Quản lý Nội dung
+                    </a>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-5 shadow-lg border border-gray-700">
+                <h3 class="font-bold text-lg mb-4 text-white flex items-center gap-2">
+                    <i class="fas fa-tags text-pink-400"></i> Quản lý Khuyến mãi & Voucher
+                </h3>
+
+                <div class="grid grid-cols-2 gap-3 mb-5 p-3 bg-gray-700 rounded-md">
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">Khuyến mãi Đang hoạt động</div>
+                        <div class="text-2xl font-bold text-pink-300 mt-1">04</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">Mã Voucher Đang dùng</div>
+                        <div class="text-2xl font-bold text-purple-300 mt-1">3200</div>
+                    </div>
+                </div>
+
+                <h4 class="font-bold text-base text-gray-200 mb-3">Chiến dịch Sắp tới (2)</h4>
+
+                <div class="space-y-3 max-h-48 overflow-y-auto pr-2">
+                    <div class="p-3 bg-gray-700/50 rounded border-l-4 border-blue-400 hover:bg-gray-700 transition">
+                        <div class="flex justify-between items-center">
+                            <p class="text-sm font-bold text-gray-200">Khuyến mãi: Hè rực rỡ (Giảm 20%)</p>
+                            <span class="text-xs text-blue-400">20/06/2026</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1">Mã: SUMMER20 | Tình trạng: Đã lên lịch</p>
+                    </div>
+                    <div class="p-3 bg-gray-700/50 rounded border-l-4 border-blue-400 hover:bg-gray-700 transition">
+                        <div class="flex justify-between items-center">
+                            <p class="text-sm font-bold text-gray-200">Voucher: Khách hàng thân thiết (100k)</p>
+                            <span class="text-xs text-blue-400">01/07/2026</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1">Mã: MEMBER100 | Tình trạng: Sẵn sàng</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-left">
+                    <a href="sale.html"
+                        class="inline-flex items-center bg-pink-600 hover:bg-pink-500 text-white font-bold px-4 py-2 rounded-lg text-sm transition shadow-md shadow-pink-500/30">
+                        <i class="fas fa-bullhorn mr-2"></i> Tạo & Quản lý Chiến dịch
+                    </a>
+                </div>
+            </div>
+            </div>
+
+        <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+
+            <div class="bg-gray-800 rounded-lg p-5 shadow-lg border border-gray-700">
+                <h3 class="font-bold text-lg mb-4 text-white">✈️ Quản lý Tàu bay</h3>
+
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>Nhiên liệu Sẵn sàng</span>
+                        <span class="text-green-400" id="plane-fuel-percent">78%</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2.5">
+                        <div class="bg-green-500 h-2.5 rounded-full" style="width: 78%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>Bảo trì Cần thiết (AOG)</span>
+                        <span class="text-red-400" id="plane-aog-count">2 Tàu bay</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2.5">
+                        <div class="bg-red-500 h-2.5 rounded-full" style="width: 10%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>Cổng đậu (Đang sử dụng)</span>
+                        <span class="text-yellow-400" id="plane-gate-usage">19 / 25</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2.5">
+                        <div class="bg-yellow-400 h-2.5 rounded-full" style="width: 76%"></div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <a href="plane.html"
+                        class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm font-semibold text-white no-underline inline-block transition duration-200">
+                        Quản lý Chi tiết Tàu bay &rarr;
+                    </a>
+                </div>
+            </div>
+
+        
+
+            <div class="bg-gray-800 rounded-lg p-5 shadow-lg border border-gray-700"> 
+                <h3 class="font-bold text-lg mb-4 text-white flex items-center">
+                    <span class="mr-2">🎫 Quản lý Vé đặt</span>
+                    <a href="booking.html"
+                        class="bg-blue-600 hover:bg-blue-700 px-3 py-1 text-xs rounded transition duration-150">Xem chi
+                        tiết</a>
+                </h3>
+
+                <div class="grid grid-cols-2 gap-3 mb-5 p-3 bg-gray-700 rounded-md">
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">Tổng vé bán (24h)</div>
+                        <div class="text-xl font-bold text-blue-300 mt-1" id="stat-total-tickets">8,150</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">Tỷ lệ Hủy</div>
+                        <div class="text-xl font-bold text-green-300 mt-1" id="stat-cancellation-rate">1.5%</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">Vé cần ghi chú</div>
+                        <div class="text-xl font-bold text-yellow-300 mt-1" id="stat-pending-notes">12</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">Tỉ lệ Delay TB</div>
+                        <div class="text-xl font-bold text-red-300 mt-1" id="stat-delay-rate">4.2%</div>
+                    </div>
+                </div>
+
+                <h4 class="font-bold text-base text-gray-200 mb-3">Tìm kiếm & Thao tác nhanh</h4>
+
+                <div class="mb-4 space-y-2">
+                    <select class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm text-gray-300">
+                        <option>Lọc theo Chuyến bay...</option>
+                        <option>VN214 (HAN)</option>
+                        <option>VJ551 (DAD)</option>
+                    </select>
+                    <input type="text" placeholder="Tìm theo Khách hàng/Mã đặt chỗ..."
+                        class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm text-gray-300 placeholder-gray-500">
+                </div>
+
+                <div class="space-y-3 max-h-48 overflow-y-auto pr-2">
+                    <p class="text-xs text-gray-400 mb-1 border-b border-gray-700 pb-1">5 vé có yêu cầu đặc biệt:</p>
+
+                    <div
+                        class="flex justify-between items-center p-2 bg-gray-700/50 rounded hover:bg-gray-700 transition">
+                        <div>
+                            <p class="text-sm font-bold text-gray-200">#ABC1234 - Nguyễn Văn A</p>
+                            <p class="text-xs text-yellow-400">VJ551 | Yêu cầu xe lăn</p>
+                        </div>
+                        <button class="text-blue-400 text-xs hover:text-blue-300">Ghi chú/Sửa</button>
+                    </div>
+
+                    <div
+                        class="flex justify-between items-center p-2 bg-gray-700/50 rounded hover:bg-gray-700 transition">
+                        <div>
+                            <p class="text-sm font-bold text-gray-200">#DEF5678 - Trần Thị B</p>
+                            <p class="text-xs text-red-400">QH102 | Đã hủy, cần hoàn tiền</p>
+                        </div>
+                        <button class="text-blue-400 text-xs hover:text-blue-300">Ghi chú/Sửa</button>
+                    </div>
+
+                    <div
+                        class="flex justify-between items-center p-2 bg-gray-700/50 rounded hover:bg-gray-700 transition">
+                        <div>
+                            <p class="text-sm font-bold text-gray-200">#GHI9012 - Phạm Minh C</p>
+                            <p class="text-xs text-green-400">VN118 | Nâng cấp hạng vé</p>
+                        </div>
+                        <button class="text-blue-400 text-xs hover:text-blue-300">Ghi chú/Sửa</button>
+                    </div>
+                </div>
+            </div>
+            </div>
+    </div>
+</body>
+<script>
+    function updateTime() {
+        const now = new Date();
+
+        // Định dạng ngày, tháng, năm (ví dụ: Chủ nhật, 07/12/2025)
+        const optionsDate = {
+            weekday: 'long',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        };
+        const formattedDate = now.toLocaleDateString('vi-VN', optionsDate);
+
+        // Định dạng giờ, phút, giây (ví dụ: 03:00:00 AM)
+        const optionsTime = {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        };
+        const formattedTime = now.toLocaleTimeString('en-US', optionsTime).replace(' ', ''); // Lấy định dạng AM/PM
+
+        const timeElement = document.getElementById('current-time');
+        if (timeElement) {
+            // Cập nhật nội dung
+            timeElement.textContent = `${formattedDate} - ${formattedTime}`;
+        }
+    }
+
+    // Chạy hàm lần đầu ngay lập tức
+    updateTime();
+
+    // Chạy hàm mỗi 1000 mili giây (1 giây)
+    setInterval(updateTime, 1000);
+</script>
+
+</html>

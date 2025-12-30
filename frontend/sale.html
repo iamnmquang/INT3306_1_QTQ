@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Khuyến mãi | QTQ Airline</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; }
+        .status-active { background-color: #065f46; color: #a7f3d0; }
+        .status-scheduled { background-color: #1e3a8a; color: #bfdbfe; }
+        .status-expired { background-color: #451a03; color: #fed7aa; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4">
+
+    <header class="flex justify-between items-center mb-6 bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+        <div class="flex items-center gap-4">
+            <a href="dashboard.html" class="text-pink-400 hover:text-pink-300 font-semibold transition">
+                <i class="fas fa-arrow-left"></i> Quay lại Dashboard
+            </a>
+            <div class="text-2xl font-bold text-white">📣 Quản lý Khuyến mãi & Voucher</div>
+        </div>
+        <button id="open-modal-btn" class="bg-pink-600 hover:bg-pink-700 px-4 py-2 rounded-lg text-sm font-bold transition shadow-lg shadow-pink-500/20">
+            <i class="fas fa-plus mr-2"></i> Tạo Chiến dịch Mới
+        </button>
+    </header>
+
+    <div class="grid grid-cols-12 gap-6">
+        <div class="col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4 mb-2">
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <p class="text-gray-400 text-xs uppercase">Chiến dịch đang chạy</p>
+                <p class="text-2xl font-bold text-pink-400">04</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <p class="text-gray-400 text-xs uppercase">Voucher đã sử dụng</p>
+                <p class="text-2xl font-bold text-purple-400">1,250</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <p class="text-gray-400 text-xs uppercase">Doanh thu khuyến mãi</p>
+                <p class="text-2xl font-bold text-green-400">2.4B VNĐ</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <p class="text-gray-400 text-xs uppercase">Tỷ lệ quy đổi</p>
+                <p class="text-2xl font-bold text-blue-400">18.5%</p>
+            </div>
+        </div>
+
+        <div class="col-span-12">
+            <div class="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-5">
+                <div class="flex flex-col md:flex-row justify-between mb-4 gap-4">
+                    <h3 class="font-bold text-lg">Danh sách Chiến dịch</h3>
+                    <input type="text" id="search-campaign" placeholder="Tìm tên mã hoặc chiến dịch..." 
+                           class="bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-sm w-full md:w-64 focus:outline-none focus:border-pink-500">
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-400 uppercase bg-gray-700">
+                            <tr>
+                                <th class="px-4 py-3">Tên Chiến dịch</th>
+                                <th class="px-4 py-3">Mã Code</th>
+                                <th class="px-4 py-3">Giảm giá</th>
+                                <th class="px-4 py-3">Thời hạn</th>
+                                <th class="px-4 py-3">Trạng thái</th>
+                                <th class="px-4 py-3 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="campaign-table-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="campaign-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-gray-800 p-6 rounded-xl w-full max-w-md border border-gray-700 shadow-2xl">
+            <h2 class="text-xl font-bold mb-4 text-pink-400" id="modal-title">Tạo Chiến dịch Mới</h2>
+            <form id="campaign-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Tên chiến dịch</label>
+                    <input type="text" id="camp-name" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Mã Voucher</label>
+                        <input type="text" id="camp-code" placeholder="VD: TET2026" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Mức giảm (%)</label>
+                        <input type="number" id="camp-discount" min="1" max="100" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Ngày kết thúc</label>
+                    <input type="date" id="camp-date" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Trạng thái</label>
+                    <select id="camp-status" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                        <option value="Active">Đang chạy</option>
+                        <option value="Scheduled">Đã lên lịch</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" id="close-modal" class="px-4 py-2 text-gray-400 hover:text-white">Hủy</button>
+                    <button type="submit" class="bg-pink-600 hover:bg-pink-700 px-6 py-2 rounded-lg font-bold">Lưu Chiến dịch</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Dữ liệu mẫu ban đầu
+        let campaigns = [
+            { id: 1, name: 'Hè Rực Rỡ 2026', code: 'SUMMER26', discount: 20, expiry: '2026-08-30', status: 'Active' },
+            { id: 2, name: 'Chào Xuân Mới', code: 'XUAN26', discount: 15, expiry: '2026-02-15', status: 'Scheduled' },
+            { id: 3, name: 'Tri ân khách hàng', code: 'THANKS', discount: 10, expiry: '2025-12-31', status: 'Expired' }
+        ];
+
+        const tableBody = document.getElementById('campaign-table-body');
+        const modal = document.getElementById('campaign-modal');
+        const form = document.getElementById('campaign-form');
+
+        // Hàm render bảng
+        function renderCampaigns(data) {
+            tableBody.innerHTML = '';
+            data.forEach(camp => {
+                const statusClass = camp.status === 'Active' ? 'status-active' : (camp.status === 'Scheduled' ? 'status-scheduled' : 'status-expired');
+                const statusText = camp.status === 'Active' ? 'Đang chạy' : (camp.status === 'Scheduled' ? 'Đã lên lịch' : 'Hết hạn');
+                
+                tableBody.innerHTML += `
+                    <tr class="border-b border-gray-700 hover:bg-gray-750 transition">
+                        <td class="px-4 py-4 font-semibold text-white">${camp.name}</td>
+                        <td class="px-4 py-4"><code class="bg-gray-900 px-2 py-1 rounded text-pink-400">${camp.code}</code></td>
+                        <td class="px-4 py-4 text-green-400">-${camp.discount}%</td>
+                        <td class="px-4 py-4 text-gray-400">${camp.expiry}</td>
+                        <td class="px-4 py-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${statusClass}">${statusText}</span></td>
+                        <td class="px-4 py-4 text-right">
+                            <button onclick="deleteCampaign(${camp.id})" class="text-red-400 hover:text-red-300 ml-3"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Mở/Đóng Modal
+        document.getElementById('open-modal-btn').onclick = () => modal.classList.replace('hidden', 'flex');
+        document.getElementById('close-modal').onclick = () => modal.classList.replace('flex', 'hidden');
+
+        // Thêm chiến dịch mới
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const newCamp = {
+                id: Date.now(),
+                name: document.getElementById('camp-name').value,
+                code: document.getElementById('camp-code').value.toUpperCase(),
+                discount: document.getElementById('camp-discount').value,
+                expiry: document.getElementById('camp-date').value,
+                status: document.getElementById('camp-status').value
+            };
+            campaigns.unshift(newCamp);
+            renderCampaigns(campaigns);
+            form.reset();
+            modal.classList.replace('flex', 'hidden');
+        };
+
+        // Xóa chiến dịch
+        function deleteCampaign(id) {
+            if(confirm('Bạn có chắc muốn xóa chiến dịch này?')) {
+                campaigns = campaigns.filter(c => c.id !== id);
+                renderCampaigns(campaigns);
+            }
+        }
+
+        // Tìm kiếm nhanh
+        document.getElementById('search-campaign').oninput = (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = campaigns.filter(c => c.name.toLowerCase().includes(val) || c.code.toLowerCase().includes(val));
+            renderCampaigns(filtered);
+        };
+
+        // Khởi tạo lần đầu
+        renderCampaigns(campaigns);
+    </script>
+</body>
+</html>

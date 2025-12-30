@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Chuyến bay - Airport Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; }
+        /* Tùy chỉnh thanh cuộn cho bảng dữ liệu lớn */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        /* Thêm style cho trạng thái */
+        .status-Boarding { background-color: #065f46; color: #a7f3d0; border-color: #047857; }
+        .status-Delayed { background-color: #991b1b; color: #fecaca; border-color: #b91c1c; }
+        .status-Scheduled { background-color: #4b5563; color: #d1d5db; border-color: #6b7280; }
+        .status-Landed { background-color: #1f2937; color: #9ca3af; border-color: #374151; opacity: 0.8; }
+        .status-Cancelled { background-color: #44403c; color: #a8a29e; border-color: #57534e; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+
+    <div class="bg-gray-800 border-b border-gray-700 p-4 flex justify-between items-center shadow-md z-10">
+        <div class="flex items-center gap-4">
+            <a href="dashboard.html" class="text-gray-400 hover:text-white transition"><i class="fas fa-arrow-left"></i> Quay lại Dashboard</a>
+            <div class="h-6 w-px bg-gray-600"></div>
+            <h1 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-plane-departure text-blue-400"></i> Quản lý Khai thác Chuyến bay
+            </h1>
+        </div>
+        <div>
+            <button id="add-flight-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-lg shadow-blue-500/30">
+                <i class="fas fa-plus mr-2"></i> Thêm chuyến bay
+            </button>
+            <button id="export-excel-btn" class="ml-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm transition">
+                <i class="fas fa-file-export mr-2"></i> Xuất Excel
+            </button>
+        </div>
+    </div>
+
+    <div class="flex-1 p-6 overflow-hidden flex flex-col">
+        
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4 flex flex-wrap gap-4 items-end shadow-sm">
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-xs text-gray-400 mb-1">Tìm kiếm (Mã chuyến bay, Điểm đến)</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i class="fas fa-search"></i></span>
+                    <input type="text" id="filter-search" placeholder="VD: VN214, Tokyo..." class="w-full bg-gray-900 border border-gray-600 text-white text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5">
+                </div>
+            </div>
+            
+            <div class="w-40">
+                <label class="block text-xs text-gray-400 mb-1">Loại chuyến</label>
+                <select id="filter-type" class="bg-gray-900 border border-gray-600 text-white text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    <option value="">Tất cả</option>
+                    <option value="Departure">🛫 Đi (Departure)</option>
+                    <option value="Arrival">🛬 Đến (Arrival)</option>
+                </select>
+            </div>
+
+            <div class="w-40">
+                <label class="block text-xs text-gray-400 mb-1">Trạng thái</label>
+                <select id="filter-status" class="bg-gray-900 border border-gray-600 text-white text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    <option value="">Tất cả</option>
+                    <option value="Scheduled">Đúng giờ (Scheduled)</option>
+                    <option value="Delayed">Delay</option>
+                    <option value="Boarding">Boarding</option>
+                    <option value="Landed">Đã hạ cánh (Landed)</option>
+                    <option value="Cancelled">Hủy chuyến</option>
+                </select>
+            </div>
+
+             <div class="w-48">
+                <label class="block text-xs text-gray-400 mb-1">Ngày bay</label>
+                <input type="date" id="filter-date" class="bg-gray-900 border border-gray-600 text-white text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+            </div>
+
+            <button id="apply-filter-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-md transition h-[42px]">
+                 <i class="fas fa-filter mr-2"></i> Lọc
+            </button>
+            <button id="reset-filter-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2.5 rounded-md transition h-[42px]">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+
+        <div class="flex space-x-1 mb-2">
+            <button data-tab="departure" class="tab-button px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-t-lg border-b-2 border-blue-400">Chuyến đi (Departures)</button>
+            <button data-tab="arrival" class="tab-button px-6 py-2 bg-gray-800 text-gray-400 hover:text-white text-sm font-medium rounded-t-lg border-b-2 border-transparent hover:bg-gray-700 transition">Chuyến đến (Arrivals)</button>
+            <button data-tab="cargo" class="tab-button px-6 py-2 bg-gray-800 text-gray-400 hover:text-white text-sm font-medium rounded-t-lg border-b-2 border-transparent hover:bg-gray-700 transition">Hàng hóa (Cargo)</button>
+        </div>
+
+        <div class="flex-1 bg-gray-800 rounded-b-lg rounded-tr-lg border border-gray-700 shadow-lg overflow-hidden flex flex-col">
+            <div class="overflow-x-auto flex-1">
+                <table class="w-full text-sm text-left text-gray-300">
+                    <thead class="text-xs text-gray-400 uppercase bg-gray-750 border-b border-gray-600 sticky top-0 bg-gray-800 z-10 shadow-sm">
+                        <tr>
+                            <th class="px-6 py-4">Chuyến bay</th>
+                            <th class="px-6 py-4">Hành trình</th>
+                            <th class="px-6 py-4">Giờ (STD / ETD)</th>
+                            <th class="px-6 py-4">Tài nguyên</th>
+                            <th class="px-6 py-4 text-center">Hành khách</th>
+                            <th class="px-6 py-4">Trạng thái</th>
+                            <th class="px-6 py-4 text-right">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="flight-data-table" class="divide-y divide-gray-700">
+                        </tbody>
+                </table>
+            </div>
+
+            <div class="bg-gray-800 border-t border-gray-700 p-4 flex items-center justify-between">
+                <span class="text-sm text-gray-400">
+                    Hiển thị <span class="font-semibold text-white" id="pagination-info">0-0</span> chuyến bay
+                </span>
+                <div class="inline-flex -space-x-px text-sm">
+                    <button id="prev-page" class="px-3 py-2 ml-0 leading-tight text-gray-400 bg-gray-800 border border-gray-700 rounded-l-lg hover:bg-gray-700 hover:text-white">Trước</button>
+                    <span id="current-page-display" class="px-3 py-2 leading-tight text-white bg-blue-600 border border-blue-600">1</span>
+                    <button id="next-page" class="px-3 py-2 leading-tight text-gray-400 bg-gray-800 border border-gray-700 rounded-r-lg hover:bg-gray-700 hover:text-white">Sau</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="edit-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-50">
+        <div class="bg-gray-800 p-6 rounded-lg w-full max-w-md shadow-2xl border border-gray-700">
+            <h2 class="text-xl font-bold mb-4 text-white">Chỉnh sửa Chuyến bay</h2>
+            <p class="text-gray-400 mb-4">Mã chuyến: <strong id="modal-flight-id"></strong></p>
+            <form id="edit-flight-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400">Trạng thái (Status)</label>
+                    <select id="modal-status-input" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="Delayed">Delayed</option>
+                        <option value="Boarding">Boarding</option>
+                        <option value="Landed">Landed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400">Giờ ước tính (ETD/ETA)</label>
+                    <input type="time" id="modal-etd-eta" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400">Cổng/Vị trí mới</label>
+                    <input type="text" id="modal-gate" placeholder="VD: G05, Belt 03" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                </div>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" id="close-edit-modal-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Hủy</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Lưu & Cập nhật DIB</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-flight-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-50">
+        <div class="bg-gray-800 p-6 rounded-lg w-full max-w-xl shadow-2xl border border-gray-700">
+            <h2 class="text-xl font-bold mb-4 text-white flex items-center gap-2"><i class="fas fa-plus-circle text-blue-400"></i> Thêm Chuyến bay Mới</h2>
+            <form id="add-flight-form" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400">Mã chuyến bay (Flight No.) <span class="text-red-500">*</span></label>
+                        <input type="text" id="new-flight-no" required placeholder="VD: VN 999" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400">Hãng (Carrier)</label>
+                        <input type="text" id="new-carrier" placeholder="VD: Vietnam Airlines" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400">Loại chuyến</label>
+                        <select id="new-type" required class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                            <option value="Departure">🛫 Đi (Departure)</option>
+                            <option value="Arrival">🛬 Đến (Arrival)</option>
+                            <option value="Cargo">📦 Hàng hóa (Cargo)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400">Giờ dự kiến (STD/STA) <span class="text-red-500">*</span></label>
+                        <input type="time" id="new-std" required class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400">Ngày bay <span class="text-red-500">*</span></label>
+                        <input type="date" id="new-date" required class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400">Mã hành trình (Route) <span class="text-red-500">*</span></label>
+                        <input type="text" id="new-route" required placeholder="VD: SGN-HAN" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400">Điểm đến/Điểm xuất phát <span class="text-red-500">*</span></label>
+                        <input type="text" id="new-destination" required placeholder="VD: Hanoi (Noibai)" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400">Loại Tàu bay</label>
+                        <input type="text" id="new-aircraft" placeholder="VD: A321" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400">Số đăng ký (Reg)</label>
+                        <input type="text" id="new-reg" placeholder="VD: VN-A392" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400">Sức chứa/Tải trọng tối đa</label>
+                        <input type="number" id="new-capacity" required value="200" min="1" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-2 border-t border-gray-700 mt-4">
+                    <button type="button" id="close-add-modal-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Hủy</button>
+                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"><i class="fas fa-save mr-2"></i> Thêm Chuyến bay</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Dữ liệu mẫu (Sample Data)
+        let flightData = [
+            { id: 1, flight_no: 'VN 214', carrier: 'Vietnam Airlines', aircraft: 'A321', reg: 'VN-A392', route: 'SGN-HAN', destination: 'Hanoi (Noibai)', std: '14:30', etd: '14:30', gate: 'G04', checkin: 'A01-A05', pax: 180, capacity: 200, status: 'Boarding', type: 'Departure' },
+            { id: 2, flight_no: 'VJ 551', carrier: 'Vietjet Air', aircraft: 'A320', reg: 'VN-A672', route: 'SGN-DAD', destination: 'Da Nang', std: '14:45', etd: '15:30', gate: 'G08', checkin: 'B01-B03', pax: 150, capacity: 180, status: 'Delayed', type: 'Departure' },
+            { id: 3, flight_no: 'QH 102', carrier: 'Bamboo Airways', aircraft: 'A320', reg: 'VN-A001', route: 'SGN-UIH', destination: 'Qui Nhon (Phu Cat)', std: '16:00', etd: '16:00', gate: 'N/A', checkin: 'C01-C02', pax: 0, capacity: 180, status: 'Scheduled', type: 'Departure' },
+            { id: 4, flight_no: 'VN 600', carrier: 'Vietnam Airlines', aircraft: 'B787', reg: 'VN-A800', route: 'BKK-SGN', destination: 'Bangkok (Suvarnabhumi)', std: '13:00', etd: '13:05', gate: 'N/A', belt: '03', pax: 250, capacity: 300, status: 'Landed', type: 'Arrival' },
+            { id: 5, flight_no: 'QR 970', carrier: 'Qatar Airways', aircraft: 'B777', reg: 'A7-BED', route: 'DOH-SGN', destination: 'Doha (Hamad)', std: '17:30', etd: '17:30', gate: 'N/A', belt: '04', pax: 300, capacity: 350, status: 'Scheduled', type: 'Arrival' },
+            { id: 6, flight_no: 'BL 792', carrier: 'Bamboo Cargo', aircraft: 'A321P2F', reg: 'VN-P2F', route: 'SGN-ICN', destination: 'Seoul (Incheon)', std: '19:00', etd: '19:00', gate: 'Cargo 2', checkin: 'N/A', pax: 0, capacity: 25000, status: 'Scheduled', type: 'Cargo' },
+            { id: 7, flight_no: 'BL 793', carrier: 'Bamboo Cargo', aircraft: 'A321P2F', reg: 'VN-P2F', route: 'ICN-SGN', destination: 'Seoul (Incheon)', std: '12:00', etd: '12:00', gate: 'N/A', belt: 'Cargo Belt 1', pax: 0, capacity: 25000, status: 'Landed', type: 'Cargo' },
+        ];
+        
+        // Trạng thái hiện tại
+        let currentTab = 'departure';
+        let currentPage = 1;
+        const pageSize = 10;
+        let currentFilter = {
+            search: '',
+            type: 'Departure',
+            status: '',
+            date: ''
+        };
+        
+        const tableBody = document.getElementById('flight-data-table');
+        const paginationInfo = document.getElementById('pagination-info');
+        
+        // Biến Modal Chỉnh sửa
+        const editModal = document.getElementById('edit-modal');
+        const modalFlightId = document.getElementById('modal-flight-id');
+        const modalStatusInput = document.getElementById('modal-status-input');
+        const modalEtdEta = document.getElementById('modal-etd-eta');
+        const modalGate = document.getElementById('modal-gate');
+        const editFlightForm = document.getElementById('edit-flight-form');
+        let editingFlight = null;
+
+        // Biến Modal Thêm chuyến bay (MỚI)
+        const addModal = document.getElementById('add-flight-modal');
+        const addFlightForm = document.getElementById('add-flight-form');
+
+        // --- Hàm Tạo HTML (Giúp tái sử dụng code) ---
+        
+        function createFlightRow(flight) {
+            const isArrival = flight.type === 'Arrival';
+            const isCargo = flight.type === 'Cargo';
+            const statusClass = `status-${flight.status}`;
+            const isFinished = flight.status === 'Landed' || flight.status === 'Cancelled';
+            const opacityClass = isFinished ? 'opacity-60' : '';
+            const highlightClass = flight.status === 'Delayed' ? 'bg-red-900/10 border-l-4 border-red-500' : (isFinished ? '' : 'hover:bg-gray-700/50');
+
+            // Logic hiển thị Giờ
+            let timeDisplay;
+            if (isArrival) {
+                timeDisplay = `
+                    <div class="text-gray-400 text-xs">STA: ${flight.std}</div>
+                    <div class="${flight.status === 'Landed' ? 'text-gray-300' : (flight.status === 'Delayed' ? 'text-red-400' : 'text-white')} font-bold text-base">${flight.etd}</div>
+                `;
+            } else {
+                 timeDisplay = `
+                    <div class="text-gray-400 text-xs ${flight.status === 'Delayed' ? 'line-through decoration-red-500' : ''}">STD: ${flight.std}</div>
+                    <div class="${flight.status === 'Delayed' ? 'text-red-400' : 'text-green-400'} font-bold text-base">${flight.etd}</div>
+                    ${flight.status === 'Delayed' ? `<div class="text-[10px] text-red-300 italic">+${getDelayMinutes(flight.std, flight.etd)} mins</div>` : ''}
+                `;
+            }
+
+            // Logic hiển thị Tài nguyên
+            let resourceDisplay;
+            if (isArrival || isCargo) {
+                const resource = isArrival ? flight.belt : flight.gate;
+                const label = isArrival ? 'Belt' : 'Vị trí';
+                resourceDisplay = resource && resource !== 'N/A' ? 
+                    `<span class="text-xs bg-gray-700 px-2 py-0.5 rounded border border-gray-600">${label}: <strong class="text-blue-300">${resource}</strong></span>` :
+                    `<span class="text-xs text-gray-500 italic">Chưa phân ${label}</span>`;
+            } else {
+                resourceDisplay = `
+                    <span class="text-xs ${flight.gate === 'G08' && flight.status === 'Delayed' ? 'bg-red-900/50 text-red-200 border border-red-800' : 'bg-gray-700 px-2 py-0.5 rounded border border-gray-600'}">Gate: <strong class="text-white">${flight.gate !== 'N/A' ? flight.gate : 'N/A'}</strong></span>
+                    <span class="text-xs bg-gray-700 px-2 py-0.5 rounded border border-gray-600">Check-in: <strong class="text-white">${flight.checkin || 'N/A'}</strong></span>
+                `;
+            }
+
+            // Logic hiển thị Hành khách/Tải trọng
+            let paxDisplay;
+            if (isCargo) {
+                 paxDisplay = `<div class="text-gray-500 text-xs">Tải trọng</div><div class="font-bold text-white">${(flight.capacity / 1000).toFixed(1)} Tấn</div>`;
+            } else if (flight.pax === 0 && flight.status === 'Scheduled') {
+                paxDisplay = `<div class="text-gray-500 text-xs">Chưa mở</div>`;
+            } else {
+                const paxPercent = (flight.pax / flight.capacity) * 100;
+                const progressBarColor = paxPercent > 90 ? 'bg-red-500' : (paxPercent > 70 ? 'bg-yellow-500' : 'bg-blue-500');
+                paxDisplay = `
+                    <div class="font-bold">${flight.pax}/${flight.capacity}</div>
+                    <div class="w-full bg-gray-600 rounded-full h-1.5 mt-1">
+                        <div class="${progressBarColor} h-1.5 rounded-full" style="width: ${paxPercent}%"></div>
+                    </div>
+                `;
+            }
+
+            // Logic hiển thị Thao tác
+            let actionsDisplay;
+            if (isFinished) {
+                actionsDisplay = `<button class="text-gray-500 cursor-not-allowed" title="Đã hoàn tất"><i class="fas fa-lock"></i></button>`;
+            } else if (flight.gate === 'N/A' && flight.type === 'Departure') {
+                actionsDisplay = `<button class="edit-btn bg-blue-600 hover:bg-blue-500 text-white text-xs px-2 py-1 rounded" data-id="${flight.id}">Assign Gate</button>`;
+            } else {
+                 actionsDisplay = `
+                    <button class="edit-btn text-gray-400 hover:text-white p-2" title="Chỉnh sửa" data-id="${flight.id}"><i class="fas fa-pen"></i></button>
+                    <button class="alert-btn text-gray-400 hover:text-blue-400 p-2" title="Thông báo loa"><i class="fas fa-bullhorn"></i></button>
+                `;
+            }
+
+            return `
+                <tr class="${highlightClass} ${opacityClass}" data-id="${flight.id}" data-type="${flight.type}" data-status="${flight.status.toLowerCase()}" data-destination="${flight.destination.toLowerCase()}">
+                    <td class="px-6 py-4">
+                        <div class="font-bold text-white text-base">${flight.flight_no}</div>
+                        <div class="text-xs ${flight.status === 'Delayed' ? 'text-red-300' : 'text-blue-400'}">${flight.carrier}</div>
+                        <div class="text-[10px] text-gray-500 mt-1">${flight.aircraft || 'N/A'} • ${flight.reg || 'N/A'}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono">${flight.route.split('-')[0]}</span> <i class="fas fa-long-arrow-alt-right text-gray-500"></i> <span class="font-mono font-bold text-white">${flight.route.split('-')[1]}</span>
+                        </div>
+                        <div class="text-xs text-gray-400">${flight.destination}</div>
+                    </td>
+                    <td class="px-6 py-4">${timeDisplay}</td>
+                    <td class="px-6 py-4"><div class="flex flex-col gap-1">${resourceDisplay}</div></td>
+                    <td class="px-6 py-4 text-center">${paxDisplay}</td>
+                    <td class="px-6 py-4">
+                        <span class="${statusClass} py-1 px-3 rounded-full text-xs font-medium flex items-center w-fit gap-2">
+                            ${flight.status === 'Boarding' ? '<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>' : ''}
+                            ${flight.status === 'Delayed' ? '<i class="fas fa-exclamation-triangle"></i>' : ''}
+                            ${flight.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right">${actionsDisplay}</td>
+                </tr>
+            `;
+        }
+        
+        // Hàm tính phút delay
+        function getDelayMinutes(std, etd) {
+            if (!std || !etd) return 0;
+            const start = new Date(`2000/01/01 ${std}`);
+            const end = new Date(`2000/01/01 ${etd}`);
+            const diffMs = end - start;
+            return Math.max(0, Math.round(diffMs / 60000));
+        }
+
+        // --- Hàm Lọc & Render Dữ liệu ---
+
+        function filterAndRender() {
+            let filtered = flightData.filter(flight => flight.type.toLowerCase() === currentTab || (currentTab === 'departure' && flight.type === 'Arrival' && flight.status === 'Landed'));
+            
+            // Lọc theo từ khóa
+            if (currentFilter.search) {
+                const search = currentFilter.search.toLowerCase();
+                filtered = filtered.filter(flight => 
+                    flight.flight_no.toLowerCase().includes(search) || 
+                    flight.destination.toLowerCase().includes(search)
+                );
+            }
+
+            // Lọc theo loại chuyến (Nếu không phải tab 'all')
+            if (currentFilter.type && currentTab !== 'cargo') {
+                filtered = filtered.filter(flight => flight.type.toLowerCase() === currentFilter.type.toLowerCase());
+            }
+
+            // Lọc theo trạng thái
+            if (currentFilter.status) {
+                filtered = filtered.filter(flight => flight.status.toLowerCase() === currentFilter.status.toLowerCase());
+            }
+            
+            // Lọc theo ngày (Mô phỏng: Dựa vào ngày hiện tại nếu filter-date không được cung cấp)
+            // Trong demo này, vì tất cả chuyến bay đều là "hôm nay", nên không cần logic lọc ngày phức tạp.
+
+            renderTable(filtered);
+        }
+
+        function renderTable(data) {
+            // Chỉ lấy 10 mục đầu tiên cho mô phỏng phân trang đơn giản
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const paginatedData = data.slice(start, end);
+
+            // Sắp xếp: ưu tiên Delayed/Boarding lên đầu, sau đó theo giờ
+            paginatedData.sort((a, b) => {
+                const statusOrder = { 'Delayed': 1, 'Boarding': 2, 'Scheduled': 3, 'Landed': 4, 'Cancelled': 5 };
+                if (statusOrder[a.status] !== statusOrder[b.status]) {
+                    return statusOrder[a.status] - statusOrder[b.status];
+                }
+                // Sắp xếp theo giờ ETD
+                return a.etd.localeCompare(b.etd);
+            });
+
+
+            tableBody.innerHTML = paginatedData.map(createFlightRow).join('');
+            
+            // Cập nhật thông tin phân trang
+            paginationInfo.textContent = `${start + 1}-${start + paginatedData.length} trong số ${data.length} chuyến bay`;
+            
+            // Cập nhật trạng thái nút phân trang
+            document.getElementById('prev-page').disabled = currentPage === 1;
+            const maxPages = Math.ceil(data.length / pageSize);
+            document.getElementById('next-page').disabled = currentPage >= maxPages;
+            document.getElementById('current-page-display').textContent = currentPage;
+
+            attachActionListeners();
+        }
+
+        // --- Xử lý Thêm Chuyến bay (MỚI) ---
+        
+        function addFlight(e) {
+            e.preventDefault();
+
+            // 1. Lấy Max ID để tạo ID mới (tự động tăng)
+            const maxId = flightData.reduce((max, flight) => Math.max(max, flight.id), 0);
+            const newId = maxId + 1;
+            
+            const type = document.getElementById('new-type').value;
+            const isCargo = type === 'Cargo';
+            
+            // 2. Tạo đối tượng chuyến bay mới
+            const newFlight = {
+                id: newId,
+                flight_no: document.getElementById('new-flight-no').value.toUpperCase().trim(),
+                carrier: document.getElementById('new-carrier').value.trim() || 'QTQ Airline',
+                aircraft: document.getElementById('new-aircraft').value.trim() || (isCargo ? 'Cargo Plane' : 'N/A'),
+                reg: document.getElementById('new-reg').value.toUpperCase().trim() || 'N/A',
+                route: document.getElementById('new-route').value.toUpperCase().trim(),
+                destination: document.getElementById('new-destination').value.trim(),
+                std: document.getElementById('new-std').value.trim(),
+                etd: document.getElementById('new-std').value.trim(), // ETD/ETA ban đầu bằng STD/STA
+                gate: type === 'Departure' ? 'N/A' : null,
+                checkin: type === 'Departure' ? 'N/A' : null,
+                belt: type === 'Arrival' || type === 'Cargo' ? 'N/A' : null,
+                pax: 0,
+                capacity: parseInt(document.getElementById('new-capacity').value),
+                status: 'Scheduled',
+                type: type,
+            };
+
+            // 3. Thêm vào mảng và render lại
+            flightData.push(newFlight);
+
+            // Chuyển sang tab tương ứng
+            if (currentTab !== type.toLowerCase()) {
+                document.querySelector(`.tab-button[data-tab="${type.toLowerCase()}"]`).click();
+            } else {
+                filterAndRender();
+            }
+            
+            // 4. Đóng modal và thông báo
+            addModal.classList.add('hidden');
+            addModal.classList.remove('flex');
+            addFlightForm.reset();
+            alert(`✅ Đã thêm thành công chuyến bay ${newFlight.flight_no} (${newFlight.destination}).`);
+
+            // TODO: Gửi yêu cầu POST lên Backend API tại đây
+            console.log("Đã thêm chuyến bay mới:", newFlight);
+        }
+
+        // --- Quản lý Sự kiện (Event Handlers) ---
+        
+        function attachActionListeners() {
+            // Nút Chỉnh sửa / Assign Gate
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const flightId = parseInt(this.dataset.id);
+                    editingFlight = flightData.find(f => f.id === flightId);
+                    
+                    if (!editingFlight) return;
+                    
+                    modalFlightId.textContent = editingFlight.flight_no;
+                    
+                    // Thiết lập giá trị mặc định cho Modal
+                    modalStatusInput.value = editingFlight.status;
+                    modalEtdEta.value = editingFlight.etd;
+                    
+                    // Logic hiển thị cổng/băng chuyền
+                    if (editingFlight.type === 'Arrival') {
+                        modalGate.value = editingFlight.belt && editingFlight.belt !== 'N/A' ? editingFlight.belt : '';
+                        document.querySelector('#edit-flight-form label[for="modal-gate"]').textContent = 'Băng chuyền mới (Belt)';
+                    } else if (editingFlight.type === 'Departure') {
+                         modalGate.value = editingFlight.gate && editingFlight.gate !== 'N/A' ? editingFlight.gate : '';
+                         document.querySelector('#edit-flight-form label[for="modal-gate"]').textContent = 'Cổng mới (Gate)';
+                    } else if (editingFlight.type === 'Cargo') {
+                         modalGate.value = (editingFlight.gate || editingFlight.belt) && (editingFlight.gate !== 'N/A' && editingFlight.belt !== 'N/A') ? (editingFlight.gate || editingFlight.belt) : '';
+                         document.querySelector('#edit-flight-form label[for="modal-gate"]').textContent = 'Vị trí bốc dỡ mới';
+                    }
+
+
+                    // Hiện Modal
+                    editModal.classList.remove('hidden');
+                    editModal.classList.add('flex');
+                });
+            });
+
+            // Nút Thông báo loa / Gửi cảnh báo
+            document.querySelectorAll('.alert-btn').forEach(btn => {
+                 btn.addEventListener('click', function() {
+                    const flightId = parseInt(this.closest('tr').dataset.id);
+                    const flight = flightData.find(f => f.id === flightId);
+                    alert(`📢 Đã gửi thông báo loa cho chuyến ${flight.flight_no} (${flight.status}).`);
+                 });
+            });
+        }
+        
+        // Đóng Modal Chỉnh sửa
+        document.getElementById('close-edit-modal-btn').addEventListener('click', () => {
+            editModal.classList.add('hidden');
+            editModal.classList.remove('flex');
+        });
+
+        // Đóng Modal Thêm chuyến bay
+        document.getElementById('close-add-modal-btn').addEventListener('click', () => {
+            addModal.classList.add('hidden');
+            addModal.classList.remove('flex');
+            addFlightForm.reset();
+        });
+
+        // Mở Modal Thêm chuyến bay
+        document.getElementById('add-flight-btn').addEventListener('click', () => {
+             addModal.classList.remove('hidden');
+             addModal.classList.add('flex');
+             // Đặt ngày bay mặc định là ngày hiện tại
+             document.getElementById('new-date').valueAsDate = new Date();
+        });
+        
+        // Xử lý Form chỉnh sửa (Modal Submit)
+        editFlightForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (editingFlight) {
+                // Cập nhật dữ liệu
+                editingFlight.status = modalStatusInput.value;
+                editingFlight.etd = modalEtdEta.value;
+                
+                const newResourceValue = modalGate.value.toUpperCase().trim() || 'N/A';
+                
+                // Cập nhật tài nguyên (Gate/Belt/Location)
+                if (editingFlight.type === 'Arrival') {
+                    editingFlight.belt = newResourceValue;
+                } else if (editingFlight.type === 'Departure') {
+                    editingFlight.gate = newResourceValue;
+                } else if (editingFlight.type === 'Cargo') {
+                    // Cập nhật tùy vào cách bạn quản lý tài nguyên hàng hóa
+                    editingFlight.gate = newResourceValue; 
+                    editingFlight.belt = newResourceValue; 
+                }
+
+                // Nếu trạng thái chuyển thành Delayed, đảm bảo ETD/ETA khác STD/STA
+                if (editingFlight.status === 'Delayed' && getDelayMinutes(editingFlight.std, editingFlight.etd) === 0) {
+                     // Nếu đang delay nhưng giờ chưa được cập nhật, set mặc định delay 45 phút 
+                     // Logic này cần được xử lý chính xác hơn trong môi trường thực tế.
+                     const [h, m] = editingFlight.std.split(':').map(Number);
+                     const newTime = new Date();
+                     newTime.setHours(h, m + 45, 0); 
+                     editingFlight.etd = `${newTime.getHours().toString().padStart(2, '0')}:${newTime.getMinutes().toString().padStart(2, '0')}`;
+                }
+                
+                // TODO: Gửi yêu cầu cập nhật lên Backend API tại đây
+                console.log(`Cập nhật thành công chuyến ${editingFlight.flight_no}. Gửi API PUT/PATCH.`);
+
+                // Đóng Modal và render lại
+                editModal.classList.add('hidden');
+                filterAndRender();
+            }
+        });
+
+        // Xử lý Form Thêm chuyến bay (MỚI)
+        addFlightForm.addEventListener('submit', addFlight);
+
+
+        // Xử lý Lọc khi nhấn nút
+        document.getElementById('apply-filter-btn').addEventListener('click', () => {
+            currentFilter.search = document.getElementById('filter-search').value;
+            currentFilter.type = document.getElementById('filter-type').value;
+            currentFilter.status = document.getElementById('filter-status').value;
+            currentFilter.date = document.getElementById('filter-date').value;
+            currentPage = 1; // Reset trang khi lọc
+            filterAndRender();
+        });
+        
+        // Xử lý Reset Lọc
+        document.getElementById('reset-filter-btn').addEventListener('click', () => {
+            document.getElementById('filter-search').value = '';
+            document.getElementById('filter-type').value = '';
+            document.getElementById('filter-status').value = '';
+            document.getElementById('filter-date').value = '';
+            currentFilter = { search: '', type: '', status: '', date: '' };
+            currentTab = 'departure'; // Reset tab
+            currentPage = 1; 
+            document.querySelector('.tab-button[data-tab="departure"]').click(); // Kích hoạt render lại
+        });
+
+        // Xử lý chuyển Tab
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', function() {
+                // Cập nhật trạng thái nút
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-400');
+                    btn.classList.add('bg-gray-800', 'text-gray-400', 'border-transparent', 'hover:bg-gray-700', 'hover:text-white');
+                });
+                this.classList.add('bg-blue-600', 'text-white', 'border-blue-400');
+                this.classList.remove('bg-gray-800', 'text-gray-400', 'border-transparent', 'hover:bg-gray-700', 'hover:text-white');
+
+                // Cập nhật Tab và Lọc
+                currentTab = this.dataset.tab;
+                currentFilter.type = (currentTab === 'departure' || currentTab === 'arrival') ? currentTab.charAt(0).toUpperCase() + currentTab.slice(1) : '';
+                
+                // Reset bộ lọc Loại chuyến trên thanh công cụ cho phù hợp với Tab
+                document.getElementById('filter-type').value = currentFilter.type;
+                
+                currentPage = 1; // Reset trang
+                filterAndRender();
+            });
+        });
+
+        // Xử lý Phân trang
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                filterAndRender();
+            }
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+            const filteredData = flightData.filter(flight => flight.type.toLowerCase() === currentTab || (currentTab === 'departure' && flight.type === 'Arrival' && flight.status === 'Landed'));
+            const maxPages = Math.ceil(filteredData.length / pageSize);
+
+            if (currentPage < maxPages) {
+                currentPage++;
+                filterAndRender();
+            }
+        });
+
+        // Xử lý các nút đơn giản khác
+        document.getElementById('export-excel-btn').addEventListener('click', () => {
+            alert("Chức năng Xuất Excel: Gửi yêu cầu API đến backend để tạo file báo cáo.");
+        });
+
+        // Khởi tạo: Hiển thị dữ liệu ban đầu
+        document.addEventListener('DOMContentLoaded', () => {
+            filterAndRender();
+        });
+    </script>
+</body>
+</html>

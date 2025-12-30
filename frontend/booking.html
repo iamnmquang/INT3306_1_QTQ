@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách Vé đặt | Airport Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; }
+        /* Style cho trạng thái vé */
+        .status-confirmed { background-color: #065f46; color: #a7f3d0; } /* green-800 / 200 */
+        .status-cancelled { background-color: #991b1b; color: #fecaca; } /* red-800 / 200 */
+        .status-pending { background-color: #92400e; color: #fde68a; } /* yellow-800 / 200 */
+        /* Style cho vị trí ghế */
+        .seat-window { color: #3b82f6; font-weight: 600; } /* blue-500 */
+        .seat-aisle { color: #10b981; font-weight: 600; } /* emerald-500 */
+        .seat-middle { color: #f59e0b; } /* amber-500 */
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4">
+
+    <header class="flex justify-between items-center mb-6 bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+        <div class="flex items-center gap-4">
+            <a href="dashboard.html" class="text-blue-400 hover:text-blue-300 font-semibold">&larr; Quay lại Dashboard</a>
+            <div class="text-2xl font-bold text-white">🎫 Danh sách Vé đặt Chi tiết</div>
+        </div>
+        <button id="export-btn" class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-sm font-semibold transition duration-150 shadow-lg">
+            📥 Xuất Báo cáo (.csv)
+        </button>
+    </header>
+
+    <div class="grid grid-cols-12 gap-6">
+
+        <div class="col-span-12 lg:col-span-3">
+            <div class="bg-gray-800 p-5 rounded-lg shadow-lg border border-gray-700 sticky top-4">
+                <h3 class="font-bold text-lg mb-4 text-white">🔎 Bộ lọc Chi tiết</h3>
+                <form id="filter-form" class="space-y-4">
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Trạng thái Vé</label>
+                        <select id="filter-status" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm text-gray-300">
+                            <option value="">-- Tất cả Trạng thái --</option>
+                            <option value="Confirmed">Đã xác nhận</option>
+                            <option value="Cancelled">Đã hủy</option>
+                            <option value="Pending">Đang chờ</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Vị trí Ghế</label>
+                        <select id="filter-seat-type" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm text-gray-300">
+                            <option value="">-- Tất cả Vị trí --</option>
+                            <option value="Window">Gần cửa sổ</option>
+                            <option value="Aisle">Gần lối đi</option>
+                            <option value="Middle">Giữa</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Chuyến bay</label>
+                        <input type="text" id="filter-flight" placeholder="VD: VN214" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm text-gray-300">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Ngày bay</label>
+                        <input type="date" id="filter-date" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm text-gray-300">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Khách hàng / Mã đặt chỗ</label>
+                        <input type="text" id="filter-customer" placeholder="Tên hoặc Mã đặt chỗ" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm text-gray-300">
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition duration-150">Áp dụng Lọc</button>
+                    <button type="reset" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 rounded transition duration-150">Xóa Lọc</button>
+
+                </form>
+            </div>
+        </div>
+
+        <div class="col-span-12 lg:col-span-9">
+            <div class="bg-gray-800 rounded-lg p-5 shadow-lg border border-gray-700">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-xl text-white">Danh sách Vé (Tổng: <span id="ticket-count">0</span>)</h3>
+                    <div class="text-sm text-gray-400">Trang 1 / 2</div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-300">
+                        <thead class="text-xs text-gray-400 uppercase bg-gray-700">
+                            <tr>
+                                <th class="px-4 py-3">Mã Vé</th>
+                                <th class="px-4 py-3">Khách hàng</th>
+                                <th class="px-4 py-3">Chuyến bay</th>
+                                <th class="px-4 py-3">Ngày bay</th>
+                                <th class="px-4 py-3">Ghế ngồi</th> <th class="px-4 py-3">Trạng thái</th>
+                                <th class="px-4 py-3">Ghi chú</th>
+                                <th class="px-4 py-3 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticket-data-table">
+                            </tbody>
+                    </table>
+                </div>
+
+                <div class="flex justify-center mt-6">
+                    <nav class="flex items-center space-x-2">
+                        <button class="bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-l text-sm">Trước</button>
+                        <span class="bg-blue-600 text-white py-1 px-3 text-sm rounded">1</span>
+                        <button class="bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 text-sm rounded">2</button>
+                        <button class="bg-gray-700 hover:bg-gray-600 text-gray-300 py-1 px-3 rounded-r text-sm">Sau</button>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="ticket-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-50">
+        <div class="bg-gray-800 p-6 rounded-lg w-full max-w-lg shadow-2xl border border-gray-700">
+            <h2 id="modal-ticket-title" class="text-xl font-bold mb-4 text-white">Sửa Vé đặt #<span id="modal-ticket-id"></span></h2>
+            <form id="ticket-form" class="space-y-4">
+
+                <input type="hidden" id="current-ticket-id">
+
+                <div>
+                    <label for="modal-status" class="block text-sm font-medium text-gray-400">Trạng thái Vé</label>
+                    <select id="modal-status" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                        <option value="Confirmed">Đã xác nhận</option>
+                        <option value="Cancelled">Đã hủy</option>
+                        <option value="Pending">Đang chờ</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="modal-seat" class="block text-sm font-medium text-gray-400">Vị trí Ghế ngồi</label>
+                    <input type="text" id="modal-seat" placeholder="VD: A12" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                </div>
+
+                <div>
+                    <label for="modal-customer" class="block text-sm font-medium text-gray-400">Tên Khách hàng</label>
+                    <input type="text" id="modal-customer" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm">
+                </div>
+
+                <div>
+                    <label for="modal-note" class="block text-sm font-medium text-gray-400">Thêm Ghi chú / Yêu cầu đặc biệt</label>
+                    <textarea id="modal-note" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white text-sm"></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" id="close-ticket-modal-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Hủy</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Lưu Thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        const ticketModal = document.getElementById('ticket-modal');
+        const ticketForm = document.getElementById('ticket-form');
+        const closeTicketModalBtn = document.getElementById('close-ticket-modal-btn');
+        const ticketDataTable = document.getElementById('ticket-data-table');
+        
+        // BIẾN CHO BỘ LỌC
+        const filterForm = document.getElementById('filter-form');
+        const statusFilter = document.getElementById('filter-status');
+        const seatTypeFilter = document.getElementById('filter-seat-type');
+        const flightFilter = document.getElementById('filter-flight');
+        const customerFilter = document.getElementById('filter-customer');
+        // Ngày bay (filter-date) bị bỏ qua để đơn giản hóa logic JS tĩnh
+
+        // Mô phỏng dữ liệu vé ban đầu (Đã THÊM trường 'seat' và 'seatType')
+        const tickets = [
+            { id: 'FGT87A', customer: 'Nguyễn Văn A', flight: 'VN214 (HAN)', date: '10/12/2025', seat: 'A12', seatType: 'Window', status: 'Confirmed', note: 'Yêu cầu ghế gần cửa sổ.' },
+            { id: 'HJK90C', customer: 'Trần Thị B', flight: 'VJ551 (DAD)', date: '11/12/2025', seat: 'C03', seatType: 'Aisle', status: 'Pending', note: 'Chờ xác nhận thanh toán.' },
+            { id: 'LMN11D', customer: 'Phạm Văn C', flight: 'QH102 (SGN)', date: '09/12/2025', seat: 'E15', seatType: 'Middle', status: 'Cancelled', note: 'Yêu cầu hoàn tiền đã xử lý.' },
+            { id: 'PQRS4E', customer: 'Lê Thị D', flight: 'VN214 (HAN)', date: '10/12/2025', seat: 'B07', seatType: 'Window', status: 'Confirmed', note: 'Không có ghi chú.' },
+            { id: 'TUVW6F', customer: 'Hoàng Minh E', flight: 'VJ551 (DAD)', date: '11/12/2025', seat: 'A01', seatType: 'Aisle', status: 'Confirmed', note: 'Yêu cầu bữa ăn chay.' },
+            { id: 'XYZ7G', customer: 'Mai Lan G', flight: 'QH102 (SGN)', date: '09/12/2025', seat: 'D10', seatType: 'Middle', status: 'Pending', note: 'Cần nâng cấp hạng thương gia.' },
+            { id: 'A001H', customer: 'Đặng Tuấn H', flight: 'VN214 (HAN)', date: '10/12/2025', seat: 'F11', seatType: 'Window', status: 'Cancelled', note: 'Khách hàng hủy chuyến 24h trước giờ bay.' },
+            { id: 'B002I', customer: 'Kim Chi I', flight: 'VJ551 (DAD)', date: '11/12/2025', seat: 'C05', seatType: 'Aisle', status: 'Confirmed', note: 'Yêu cầu xe lăn.' },
+            { id: 'C003J', customer: 'Văn Đạt K', flight: 'QH102 (SGN)', date: '09/12/2025', seat: 'A08', seatType: 'Window', status: 'Confirmed', note: 'Không có ghi chú.' },
+            { id: 'D004L', customer: 'Ngọc Mai L', flight: 'VN214 (HAN)', date: '10/12/2025', seat: 'E02', seatType: 'Middle', status: 'Confirmed', note: 'Không có ghi chú.' }
+        ];
+
+        // Hàm lấy class trạng thái
+        function getStatusClass(status) {
+            switch (status) {
+                case 'Confirmed': return 'status-confirmed';
+                case 'Cancelled': return 'status-cancelled';
+                case 'Pending': return 'status-pending';
+                default: return 'bg-gray-600 text-gray-300';
+            }
+        }
+        
+        // Hàm lấy class vị trí ghế
+        function getSeatClass(seatType) {
+            switch (seatType) {
+                case 'Window': return 'seat-window';
+                case 'Aisle': return 'seat-aisle';
+                case 'Middle': return 'seat-middle';
+                default: return 'text-gray-300';
+            }
+        }
+
+        // Hàm hiển thị dữ liệu
+        function renderTickets(ticketList) {
+            ticketDataTable.innerHTML = ''; // Xóa dữ liệu cũ
+            document.getElementById('ticket-count').textContent = ticketList.length;
+
+            ticketList.forEach(ticket => {
+                const statusClass = getStatusClass(ticket.status);
+                const seatClass = getSeatClass(ticket.seatType);
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-700 hover:bg-gray-700';
+                row.dataset.id = ticket.id;
+                
+                row.innerHTML = `
+                    <td class="px-4 py-3 font-bold text-white" data-field="id">${ticket.id}</td>
+                    <td class="px-4 py-3" data-field="customer">${ticket.customer}</td>
+                    <td class="px-4 py-3" data-field="flight">${ticket.flight}</td>
+                    <td class="px-4 py-3" data-field="date">${ticket.date}</td>
+                    <td class="px-4 py-3 ${seatClass}" data-field="seat">${ticket.seat} (${ticket.seatType})</td>
+                    <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs ${statusClass}" data-field="status">${ticket.status}</span></td>
+                    <td class="px-4 py-3 ${ticket.note.includes('Không có ghi chú') || ticket.note.includes('Chờ xác nhận') ? 'text-gray-400' : 'text-yellow-400'}" data-field="note">${ticket.note}</td>
+                    <td class="px-4 py-3 text-right">
+                        <button class="edit-ticket-btn text-blue-400 hover:text-blue-300 mr-2">Sửa</button>
+                        <button class="note-ticket-btn text-green-400 hover:text-green-300">Ghi chú</button>
+                    </td>
+                `;
+                ticketDataTable.appendChild(row);
+            });
+            attachModalListeners(); // Gán sự kiện cho các nút mới
+        }
+        
+        // Gán sự kiện cho các nút Sửa/Ghi chú
+        function attachModalListeners() {
+            document.querySelectorAll('.edit-ticket-btn, .note-ticket-btn').forEach(button => {
+                button.onclick = function() {
+                    const row = this.closest('tr');
+                    const ticketId = row.dataset.id;
+                    const ticket = tickets.find(t => t.id === ticketId);
+                    
+                    if (!ticket) return;
+
+                    // Thiết lập Modal
+                    document.getElementById('modal-ticket-id').textContent = ticket.id;
+                    document.getElementById('current-ticket-id').value = ticket.id;
+                    document.getElementById('modal-status').value = ticket.status;
+                    document.getElementById('modal-seat').value = ticket.seat; // THÊM GHẾ
+                    document.getElementById('modal-customer').value = ticket.customer;
+                    document.getElementById('modal-note').value = ticket.note;
+
+                    ticketModal.classList.remove('hidden');
+                    ticketModal.classList.add('flex');
+                };
+            });
+        }
+        
+        // Xử lý đóng Modal
+        closeTicketModalBtn.addEventListener('click', () => {
+            ticketModal.classList.add('hidden');
+            ticketModal.classList.remove('flex');
+        });
+
+        // Hàm xác định loại ghế từ mã ghế (để cập nhật lại seatType khi sửa)
+        function determineSeatType(seatCode) {
+            const lastChar = seatCode.trim().toUpperCase().slice(-1);
+            if (['A', 'F', 'J'].includes(lastChar)) return 'Window'; // Giả định A, F, J là ghế cửa sổ
+            if (['C', 'D', 'G', 'H'].includes(lastChar)) return 'Aisle'; // Giả định C, D, G, H là ghế lối đi
+            return 'Middle';
+        }
+
+        // Xử lý Lọc dữ liệu
+        filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const statusVal = statusFilter.value.toLowerCase();
+            const seatTypeVal = seatTypeFilter.value.toLowerCase(); // Lọc theo loại ghế
+            const flightVal = flightFilter.value.toLowerCase();
+            const customerVal = customerFilter.value.toLowerCase();
+            
+            const filteredTickets = tickets.filter(ticket => {
+                // Lọc theo trạng thái
+                const matchesStatus = statusVal === '' || ticket.status.toLowerCase() === statusVal;
+                
+                // Lọc theo loại ghế
+                const matchesSeatType = seatTypeVal === '' || ticket.seatType.toLowerCase() === seatTypeVal;
+
+                // Lọc theo chuyến bay
+                const matchesFlight = flightVal === '' || ticket.flight.toLowerCase().includes(flightVal);
+                
+                // Lọc theo Khách hàng/Mã đặt chỗ
+                const matchesCustomer = customerVal === '' || 
+                                        ticket.customer.toLowerCase().includes(customerVal) || 
+                                        ticket.id.toLowerCase().includes(customerVal);
+                
+                return matchesStatus && matchesSeatType && matchesFlight && matchesCustomer;
+            });
+
+            renderTickets(filteredTickets);
+        });
+        
+        // Xử lý Lưu thay đổi (Sửa/Ghi chú)
+        ticketForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('current-ticket-id').value;
+            const newStatus = document.getElementById('modal-status').value;
+            const newSeat = document.getElementById('modal-seat').value.toUpperCase(); // Ghế mới
+            const newCustomer = document.getElementById('modal-customer').value;
+            const newNote = document.getElementById('modal-note').value;
+            
+            // Cập nhật dữ liệu trong mảng mô phỏng
+            const ticketIndex = tickets.findIndex(t => t.id === id);
+            if (ticketIndex !== -1) {
+                tickets[ticketIndex].status = newStatus;
+                tickets[ticketIndex].customer = newCustomer;
+                tickets[ticketIndex].seat = newSeat; // Cập nhật Ghế
+                tickets[ticketIndex].seatType = determineSeatType(newSeat); // Cập nhật Loại ghế
+                tickets[ticketIndex].note = newNote;
+                
+                // TODO: Gửi yêu cầu SỬA/GHI CHÚ đến Backend API tại đây
+                console.log(`Đã lưu thay đổi cho vé ${id}. Ghế mới: ${newSeat}. Gửi API PUT/PATCH.`);
+            }
+
+            renderTickets(tickets); // Hiển thị lại danh sách sau khi sửa
+            ticketModal.classList.add('hidden');
+            ticketModal.classList.remove('flex');
+        });
+
+        // Tải dữ liệu ban đầu
+        renderTickets(tickets);
+    </script>
+</body>
+</html>

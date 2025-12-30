@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Tàu bay | Airport Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; }
+        .editing-row {
+            background-color: #273752 !important;
+            border-left: 4px solid #3b82f6;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .new-row { animation: fadeIn 0.4s ease-out; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4">
+
+    <header class="flex justify-between items-center mb-6 bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
+        <div class="flex items-center gap-4">
+            <a href="#" class="text-blue-400 hover:text-blue-300 font-semibold">&larr; Quay lại Dashboard</a>
+            <div class="text-2xl font-bold text-white">✈️ Quản lý Chi tiết Tàu bay</div>
+        </div>
+        <button id="add-plane-btn" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-sm font-semibold transition duration-150 shadow-lg">
+            ➕ Thêm Tàu bay Mới
+        </button>
+    </header>
+
+    <div class="bg-gray-800 rounded-lg p-5 shadow-lg border border-gray-700">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-300">
+                <thead class="text-xs text-gray-400 uppercase bg-gray-700">
+                    <tr>
+                        <th class="px-4 py-3">Mã Đăng ký</th>
+                        <th class="px-4 py-3">Loại Tàu bay</th>
+                        <th class="px-4 py-3">Cổng Đậu</th>
+                        <th class="px-4 py-3">Tình trạng</th>
+                        <th class="px-4 py-3">Thời gian Bay (giờ)</th>
+                        <th class="px-4 py-3 text-right">Thao tác</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+
+    <div id="plane-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-gray-800 p-6 rounded-lg w-full max-w-lg shadow-2xl border border-gray-700">
+            <h2 id="modal-title" class="text-xl font-bold mb-4 text-white">Thêm Tàu bay Mới</h2>
+            <form id="plane-form">
+                <input type="hidden" id="plane-id">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-400">Mã Đăng ký (VD: VN-A898)</label>
+                    <input type="text" id="registration" required class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white outline-none focus:border-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-400">Loại Tàu bay (VD: A350)</label>
+                    <input type="text" id="model" required class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white outline-none focus:border-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-400">Cổng Đậu/Vị trí (VD: G15)</label>
+                    <input type="text" id="gate" required class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white outline-none focus:border-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-400">Tình trạng</label>
+                    <select id="status" required class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white outline-none focus:border-blue-500">
+                        <option value="Sẵn sàng">Sẵn sàng</option>
+                        <option value="Đang bay">Đang bay</option>
+                        <option value="Bảo trì">Bảo trì</option>
+                        <option value="Đợi khách">Đợi khách</option>
+                    </select>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-400">Thời gian Bay (giờ)</label>
+                    <input type="number" id="flight_hours" required class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white outline-none focus:border-blue-500">
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="close-modal-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition">Hủy</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const tableBody = document.getElementById('plane-data-table');
+        const modal = document.getElementById('plane-modal');
+        const form = document.getElementById('plane-form');
+        const addBtn = document.getElementById('add-plane-btn');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const modalTitle = document.getElementById('modal-title');
+        
+        let currentEditingRow = null;
+        let planeIdCounter = 2; // Bắt đầu sau hàng mẫu đầu tiên
+
+        function openModal(mode, row = null) {
+            form.reset();
+            currentEditingRow = row;
+            if (mode === 'add') {
+                modalTitle.textContent = '➕ Thêm Tàu bay Mới';
+                document.getElementById('plane-id').value = '';
+            } else {
+                modalTitle.textContent = '✍️ Chỉnh sửa Thông tin Tàu bay';
+                document.getElementById('plane-id').value = row.dataset.id;
+                document.getElementById('registration').value = row.querySelector('[data-field="registration"]').textContent;
+                document.getElementById('model').value = row.querySelector('[data-field="model"]').textContent;
+                document.getElementById('gate').value = row.querySelector('[data-field="gate"]').textContent;
+                document.getElementById('status').value = row.querySelector('[data-field="status"]').textContent;
+                document.getElementById('flight_hours').value = row.querySelector('[data-field="flight_hours"]').textContent.replace(/,/g, '');
+                row.classList.add('editing-row');
+            }
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            if (currentEditingRow) currentEditingRow.classList.remove('editing-row');
+        }
+
+        function getStatusClass(status) {
+            switch (status) {
+                case 'Sẵn sàng': return 'bg-green-900 text-green-300';
+                case 'Đang bay': return 'bg-yellow-900 text-yellow-300';
+                case 'Bảo trì': return 'bg-red-900 text-red-300';
+                default: return 'bg-blue-900 text-blue-300';
+            }
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const planeData = {
+                id: document.getElementById('plane-id').value,
+                registration: document.getElementById('registration').value,
+                model: document.getElementById('model').value,
+                gate: document.getElementById('gate').value,
+                status: document.getElementById('status').value,
+                flight_hours: parseInt(document.getElementById('flight_hours').value)
+            };
+
+            if (planeData.id) {
+                // CẬP NHẬT HÀNG ĐANG SỬA
+                currentEditingRow.querySelector('[data-field="registration"]').textContent = planeData.registration;
+                currentEditingRow.querySelector('[data-field="model"]').textContent = planeData.model;
+                currentEditingRow.querySelector('[data-field="gate"]').textContent = planeData.gate;
+                
+                const statusSpan = currentEditingRow.querySelector('[data-field="status"]');
+                statusSpan.textContent = planeData.status;
+                statusSpan.className = `${getStatusClass(planeData.status)} py-1 px-2 rounded text-xs`;
+                
+                currentEditingRow.querySelector('[data-field="flight_hours"]').textContent = planeData.flight_hours.toLocaleString('en-US');
+            } else {
+                // THÊM HÀNG MỚI
+                const newId = planeIdCounter++;
+                const statusClass = getStatusClass(planeData.status);
+                
+                const newRowHtml = `
+                    <tr class="hover:bg-gray-750 border-b border-gray-700 new-row" data-id="${newId}">
+                        <td class="px-4 py-3 font-bold text-white" data-field="registration">${planeData.registration}</td>
+                        <td class="px-4 py-3" data-field="model">${planeData.model}</td>
+                        <td class="px-4 py-3" data-field="gate">${planeData.gate}</td>
+                        <td class="px-4 py-3"><span class="${statusClass} py-1 px-2 rounded text-xs" data-field="status">${planeData.status}</span></td>
+                        <td class="px-4 py-3" data-field="flight_hours">${planeData.flight_hours.toLocaleString('en-US')}</td>
+                        <td class="px-4 py-3 text-right">
+                            <button class="edit-btn text-blue-400 hover:text-blue-300 mr-3">Sửa</button>
+                            <button class="delete-btn text-red-400 hover:text-red-300">Xóa</button>
+                        </td>
+                    </tr>`;
+                
+                // Thêm vào cuối bảng
+                tableBody.insertAdjacentHTML('beforeend', newRowHtml);
+            }
+
+            closeModal();
+            attachEventListeners(); 
+        });
+
+        function attachEventListeners() {
+            // Nút Xóa
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const row = this.closest('tr');
+                    if (confirm(`Xóa tàu bay ${row.querySelector('[data-field="registration"]').textContent}?`)) {
+                        row.remove();
+                    }
+                };
+            });
+
+            // Nút Sửa
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.onclick = function() {
+                    openModal('edit', this.closest('tr'));
+                };
+            });
+        }
+
+        addBtn.addEventListener('click', () => openModal('add'));
+        closeModalBtn.addEventListener('click', closeModal);
+        attachEventListeners();
+    </script>
+</body>
+</html>
