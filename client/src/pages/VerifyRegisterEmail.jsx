@@ -1,53 +1,39 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { authApi } from "../api/authApi";
 
-export default function Login() {
+export default function VerifyRegisterEmail() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { login } = useAuth();
 
-  // Prefill email if passed via state (e.g., after verify) or query
   const initialEmail =
     location.state?.email || new URLSearchParams(location.search).get("email") || "";
 
   const [email, setEmail] = useState(initialEmail);
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
+  const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  // If nav to login included a message (e.g., verified), show it
-  const { verified } = location.state || {};
-
-  useEffect(() => {
-    if (verified) {
-      setError(null);
-    }
-  }, [verified]);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
-    if (!email.trim() || !password) {
-      setError("Vui lòng nhập email và mật khẩu");
+    if (!email.trim() || !otp.trim()) {
+      setError("Vui lòng nhập email và mã OTP");
       return;
     }
 
     setIsLoading(true);
     try {
-      await login(email, password);
-
-      // Redirect to intended protected route or to homepage
-      const fromLocation = location.state?.from || "/";
-      if (typeof fromLocation === 'string') {
-        navigate(fromLocation, { replace: true });
-      } else {
-        const toPath = (fromLocation.pathname || "/") + (fromLocation.search || "");
-        navigate(toPath, { replace: true, state: fromLocation.state });
-      }
+      await authApi.verifyAccount(email, otp);
+      setSuccess("Xác thực thành công. Bạn có thể đăng nhập ngay bây giờ.");
+      // Redirect to login after short delay
+      setTimeout(() => {
+        navigate("/login", { state: { verified: true, email } });
+      }, 900);
     } catch (err) {
-      console.error("Login error", err);
+      console.error(err);
       if (!err.response) {
         setError("Không kết nối tới server. Vui lòng kiểm tra mạng hoặc server.");
       } else {
@@ -55,8 +41,7 @@ export default function Login() {
         const message =
           data?.message || data?.error || (data?.errors ? data.errors.map((e) => e.msg || e.message).join(", ") : null) ||
           `Lỗi server: ${err.response.status}`;
-
-        setError(message || "Đăng nhập thất bại");
+        setError(message || "Xác thực thất bại");
       }
     } finally {
       setIsLoading(false);
@@ -66,14 +51,11 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-        <h2 className="text-2xl font-bold text-center mb-2">Đăng nhập</h2>
-        <p className="text-center text-gray-500 mb-6">Đăng nhập để tiếp tục</p>
+        <h2 className="text-2xl font-bold text-center mb-2">Xác thực Email</h2>
+        <p className="text-center text-gray-500 mb-6">
+          Nhập mã OTP đã gửi tới email để hoàn tất đăng ký
+        </p>
 
-        {verified && (
-          <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 mb-4">Tài khoản đã được xác thực — hãy đăng nhập.</p>
-        )}
-
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -88,12 +70,12 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Mã OTP</label>
             <input
-              type="password"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              type="text"
+              placeholder="Enter OTP"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
               className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -103,16 +85,20 @@ export default function Login() {
             <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>
           )}
 
+          {success && (
+            <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">{success}</p>
+          )}
+
           <button
             type="submit"
             disabled={isLoading}
             className={`w-full py-2 rounded-md font-semibold text-white ${isLoading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 transition"}`}>
-            {isLoading ? "Đang xử lý..." : "Đăng nhập"}
+            {isLoading ? "Đang xác thực..." : "Xác thực"}
           </button>
 
           <div className="text-center text-sm mt-4">
-            <span className="text-gray-600">Chưa có tài khoản?</span>{" "}
-            <Link to="/register" className="text-blue-600 hover:underline font-medium">Đăng ký</Link>
+            <span className="text-gray-600">Chưa nhận mã?</span>{" "}
+            <Link to="/login" className="text-blue-600 hover:underline font-medium">Quay lại Đăng nhập</Link>
           </div>
         </form>
       </div>

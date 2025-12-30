@@ -1,62 +1,41 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import Register from './pages/Register';
+import VerifyRegisterEmail from './pages/VerifyRegisterEmail';
+import Login from './pages/Login';
 
-import Header from './components/Header';
-import Hero from './components/Hero';
-import Services from './components/Services';
-import Footer from './components/Footer';
-
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-
-import CreateTicket from "./pages/CreateTicket";
-import Support from "./pages/Support";
-import TicketsList from "./pages/TicketsList";
-import TicketDetail from "./pages/TicketDetail";
-import Schedule from './pages/Schedule';
-import Promotions from './pages/Promotions';
-import VerifyOtp from './pages/VerifyOtp';
+// Pages
+import HomePage from './pages/HomePage';
+import ProtectedRoute from './components/common/ProtectedRoute';
 import Profile from './pages/Profile';
-import SupportChat from './pages/SupportChat';
+import SelectFlight from './pages/SelectFlight';
+import Book from './pages/Book';
+import BookingSuccess from './pages/BookingSuccess';
+import MyFlights from './pages/MyFlights';
 
-import "./index.css";
 
 function App() {
-
-  // ✅ Chờ xác định user
-
   return (
     <BrowserRouter>
-      <Header />
+      <AuthProvider>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/verify-register-email" element={<VerifyRegisterEmail />} />
 
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <>
-              <main>
-                <Hero />
-                <Services />
-              </main>
-              <Footer />
-            </>
-          }
-        />
+          {/* Protected */}
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/select-flight" element={<SelectFlight />} />
+          <Route path="/book" element={<Book />} />
+          <Route path="/booking-success" element={<BookingSuccess />} />
+          <Route path="/my-flights" element={<MyFlights />} />
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-
-        <Route path="/support" element={<Support />} />
-        <Route path="/support/new" element={<CreateTicket />} />
-        <Route path="/support/tickets" element={<TicketsList />} />
-        <Route path="/support/tickets/:id" element={<TicketDetail />} />
-
-        <Route path="/schedule" element={<Schedule />} />
-        <Route path="/promotions" element={<Promotions />} />
-        <Route path="/verify-register-email" element={<VerifyOtp />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/support-chat" element={<SupportChat />} />
-      </Routes>
+          {/* 404 */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

@@ -9,7 +9,7 @@ const AuthService = {
       data: {
         hashedToken: hashToken(refreshToken),
         userId,
-        expireAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+        expireAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), //1 month
       },
     });
   },

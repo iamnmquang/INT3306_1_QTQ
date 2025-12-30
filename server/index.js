@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const http = require("http");
 const { Server } = require("socket.io");
-const jwt = require("jsonwebtoken"); // 👈 THÊM
+const jwt = require("jsonwebtoken"); 
 const app = require("./app");
 
 const server = http.createServer(app);
@@ -21,5 +21,5 @@ require("./socket/chat.socket")(io);
 
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () =>
-    console.log(`🚀 Server running on ${PORT}`)
+    console.log(` Server running on ${PORT}`)
 );
