@@ -157,7 +157,7 @@ model SeatDetail {
 model Ticket {
   id               String   @id @default(uuid())
   ticketNumber     String   @unique
-  bookingReference String   @unique
+  bookingReference String   
   seatNumber       String?
   isCancelled      Boolean  @default(false)
   discount         Float?
