@@ -5,7 +5,6 @@ import api, { setAccessToken } from '../api/axios';
 import { authApi } from '../api/authApi';
 import { userApi } from '../api/userApi';
 
-
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -17,24 +16,31 @@ export function AuthProvider({ children }) {
       return null;
     }
   });
-  const [loading, setLoading] = useState(true);
 
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Initialize session: attempt refresh -> fetch profile
+  // ================= INIT SESSION =================
   useEffect(() => {
     let mounted = true;
 
     const init = async () => {
       setLoading(true);
       try {
-        // Try to get a new access token using refresh token cookie
+        // ✅ 1. Nếu đã có user → dùng luôn, KHÔNG gọi API
+        const rawUser = localStorage.getItem('user');
+        if (rawUser) {
+          const parsedUser = JSON.parse(rawUser);
+          if (mounted) setUser(parsedUser);
+          return;
+        }
+
+        // ✅ 2. Chỉ khi reload / chưa login mới gọi refresh + profile
         const refreshRes = await authApi.refreshToken();
         if (refreshRes?.accessToken) {
           setAccessToken(refreshRes.accessToken);
         }
 
-        // Fetch the current profile (server may return { user } or the user object)
         const profileRes = await userApi.getProfile();
         const currentUser = profileRes.user || profileRes;
 
@@ -43,7 +49,6 @@ export function AuthProvider({ children }) {
         localStorage.setItem('user', JSON.stringify(currentUser));
         localStorage.setItem('isLoggedIn', 'true');
       } catch (err) {
-        // If refresh fails, clear local session
         setAccessToken(null);
         setUser(null);
         localStorage.removeItem('user');
@@ -54,13 +59,12 @@ export function AuthProvider({ children }) {
     };
 
     init();
-
     return () => {
       mounted = false;
     };
   }, []);
 
-  // Keep state in sync across tabs/windows
+  // ================= SYNC TAB / WINDOW =================
   useEffect(() => {
     const onLogin = () => {
       try {
@@ -71,17 +75,13 @@ export function AuthProvider({ children }) {
       }
     };
 
-    const onLogout = () => {
-      setUser(null);
-    };
+    const onLogout = () => setUser(null);
 
     const onUpdate = () => {
       try {
         const raw = localStorage.getItem('user');
         if (raw) setUser(JSON.parse(raw));
-      } catch {
-        // ignore
-      }
+      } catch { }
     };
 
     window.addEventListener('userLogin', onLogin);
@@ -95,17 +95,16 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // Register interceptor to force logout when refresh fails
+  // ================= INTERCEPTOR =================
   useEffect(() => {
     const interceptor = api.interceptors.response.use(
       (res) => res,
       (error) => {
         if (error?.isRefreshFailed) {
-          // cleanup local session and navigate to login
           setAccessToken(null);
           setUser(null);
-          localStorage.removeItem('isLoggedIn');
           localStorage.removeItem('user');
+          localStorage.removeItem('isLoggedIn');
           window.dispatchEvent(new Event('userLogout'));
           navigate('/login');
         }
@@ -116,6 +115,7 @@ export function AuthProvider({ children }) {
     return () => api.interceptors.response.eject(interceptor);
   }, [navigate]);
 
+  // ================= ACTIONS =================
   const login = useCallback(async (email, password) => {
     const data = await authApi.login(email, password);
     const accessToken = data.accessToken || data.token || null;
@@ -123,8 +123,8 @@ export function AuthProvider({ children }) {
 
     if (accessToken) setAccessToken(accessToken);
     setUser(currentUser);
-    localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('user', JSON.stringify(currentUser));
+    localStorage.setItem('isLoggedIn', 'true');
     window.dispatchEvent(new Event('userLogin'));
 
     return currentUser;
@@ -133,27 +133,23 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
-    } catch (err) {
-      // ignore errors on logout
-    }
+    } catch { }
 
     setAccessToken(null);
     setUser(null);
-    localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('user');
+    localStorage.removeItem('isLoggedIn');
     window.dispatchEvent(new Event('userLogout'));
     navigate('/');
   }, [navigate]);
 
-  // Update user locally (and notify other components)
   const updateUser = useCallback((userData) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
     window.dispatchEvent(new Event('userUpdate'));
   }, []);
 
-  // Use userApi for changing password (authenticated flow)
-  const changePassword = useCallback(async (currentPassword, newPassword) => {
+  const changePassword = useCallback((currentPassword, newPassword) => {
     return userApi.changePassword(currentPassword, newPassword);
   }, []);
 

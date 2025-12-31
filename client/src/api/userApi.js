@@ -20,6 +20,8 @@ export const userApi = {
       newPassword
     });
     return response.data;
+  }, // ✅ đóng đúng ở đây
+
   // Admin / Generic
   getAll: async () => {
     const res = await axiosInstance.get('/user');
@@ -45,5 +47,4 @@ export const userApi = {
     const res = await axiosInstance.delete(`/user/${id}`);
     return res.data;
   }
-
-}
+};

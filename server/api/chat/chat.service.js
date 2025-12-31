@@ -47,9 +47,20 @@ const ChatService = {
     getMessages: async (roomId) => {
         return prisma.chatMessage.findMany({
             where: { roomId },
-            orderBy: { createdAt: 'asc' }
+            orderBy: { createdAt: 'asc' },
+            include: {
+                sender: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        role: true
+                    }
+                }
+            }
         })
     },
+
 
     createMessage: async ({
         roomId,
@@ -58,13 +69,22 @@ const ChatService = {
         content,
         attachments
     }) => {
+        // 🔒 validate senderId
+        const sender = await prisma.user.findUnique({
+            where: { id: senderId }
+        })
+
+        if (!sender) {
+            throw new Error('Sender user not found')
+        }
+
         return prisma.chatMessage.create({
             data: {
                 roomId,
-                senderId,
+                senderId: sender.id,
                 senderRole,
                 content,
-                attachments: attachments || null
+                attachments: attachments ?? null
             }
         })
     },

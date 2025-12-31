@@ -27,55 +27,12 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16 lg:h-20">
 
-        {/* Logo */}
-        <div
-          className="text-2xl font-bold text-blue-600 cursor-pointer"
-          onClick={handleHomeClick}
-        >
-          QTQAirline
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex items-center space-x-6">
-          <button className="text-gray-700 hover:text-blue-600 font-medium transition" onClick={handleHomeClick}>
-            Trang chủ
-          </button>
-          <button className="text-gray-700 hover:text-blue-600 font-medium transition" onClick={() => navigate("/my-flights")}> 
-            Lịch bay
-          </button>
-          <button className="text-gray-700 hover:text-blue-600 font-medium transition" onClick={() => navigate("/promotions")}>
-            Khuyến mãi
-          </button>
-          <button className="text-gray-700 hover:text-blue-600 font-medium transition" onClick={() => navigate("/booking-search")}>
-            Tra cứu đặt vé
-          </button>
-          <button className="text-gray-700 hover:text-blue-600 font-medium transition" onClick={() => navigate("/support")}>
-            Hỗ trợ
-          </button>
-        </nav>
-
-        {/* Auth */}
-        <div>
-          {!isAuthenticated ? (
-            <div className="flex gap-3">
-              <button
-                className="px-4 py-2 border border-gray-300 rounded-md
-           hover:bg-gray-100 transition text-sm font-medium"
-                onClick={() => navigate("/login")}
-              >
-                Đăng nhập
-              </button>
-              <button
-                className="px-4 py-2 border border-gray-300 rounded-md
-           hover:bg-gray-100 transition text-sm font-medium"
-                onClick={() => navigate("/register")}
-              >
-                Đăng ký
-              </button>
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent hidden sm:block">
-              QTQAirline
-            </span>
+          {/* ===== LOGO ===== */}
+          <div
+            className="text-2xl font-bold text-blue-600 cursor-pointer"
+            onClick={handleHomeClick}
+          >
+            QTQAirline
           </div>
 
           {/* ===== NAVIGATION ===== */}
@@ -83,7 +40,7 @@ export default function Header() {
             {[
               { label: "Trang chủ", path: "/home", onClick: handleHomeClick },
               { label: "Lịch bay", path: "/my-flights", onClick: () => navigate("/my-flights") },
-              { label: "Tin mới", path: "/promotions", onClick: () => navigate("/promotions") },
+              { label: "Khuyến mãi", path: "/promotions", onClick: () => navigate("/promotions") },
               { label: "Hỗ trợ", path: "/support-chat", onClick: () => navigate("/support-chat") },
             ].map((item) => {
               const isActive = location.pathname === item.path
@@ -92,7 +49,7 @@ export default function Header() {
                   key={item.label}
                   onClick={item.onClick}
                   className={`px-4 py-2.5 rounded-xl font-medium transition-all
-                  ${isActive
+                ${isActive
                       ? "bg-blue-50 text-blue-700"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                     }`}
@@ -109,8 +66,8 @@ export default function Header() {
               <>
                 <button
                   onClick={() => navigate("/login")}
-                  className="hidden sm:flex px-4 py-2 rounded-xl text-sm font-medium
-    text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
+                  className="px-4 py-2 rounded-xl text-sm font-medium
+                text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
                 >
                   Đăng nhập
                 </button>
@@ -118,14 +75,12 @@ export default function Header() {
                 <button
                   onClick={() => navigate("/register")}
                   className="px-4 py-2 rounded-xl text-sm font-medium
-    text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
+                text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
                 >
                   Đăng ký
                 </button>
               </>
-
             ) : (
-              /* ===== USER DROPDOWN ===== */
               <div className="relative group">
                 <button
                   className="flex items-center gap-2 px-3 py-2 rounded-xl
@@ -139,15 +94,6 @@ export default function Header() {
                   <span className="hidden sm:block font-medium text-slate-700">
                     {user?.name || "User"}
                   </span>
-                  <svg
-                    className="w-4 h-4 text-slate-400"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
                 </button>
 
                 {/* Dropdown */}
@@ -179,7 +125,7 @@ export default function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 
 
 }
