@@ -215,10 +215,6 @@ export default function SupportManager() {
   return (
     <div className="min-h-screen bg-slate-50 py-8">
       <div className="max-w-7xl mx-auto px-4">
-        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-8">
-          Chat hỗ trợ khách hàng
-        </h1>
-
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-[700px] flex">
 
           {/* ================= LEFT: ROOMS ================= */}

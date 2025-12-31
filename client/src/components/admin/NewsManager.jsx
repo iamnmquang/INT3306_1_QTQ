@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { newsApi } from '../../api/newsApi';
 import Modal from '../common/Modal';
+import { useToast } from '../../context/ToastContext';
+
 
 /** =========================
  *  ẢNH CỐ ĐỊNH CHO TIN TỨC
@@ -11,6 +13,7 @@ const FIXED_NEWS_IMAGE = '/public/images/QTQAirlinelogo.jpg';
 export default function NewsManager() {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
   const [form, setForm] = useState({
     title: '',
     content: '',
@@ -28,7 +31,7 @@ export default function NewsManager() {
       setNews(data);
     } catch (err) {
       console.error(err);
-      alert('Lỗi khi tải tin tức');
+      toast.error('Lỗi khi tải tin tức');
     } finally {
       setLoading(false);
     }
@@ -56,7 +59,7 @@ export default function NewsManager() {
   const submit = async (e) => {
     e && e.preventDefault();
     if (!form.title || !form.content) {
-      return alert('Title và content là bắt buộc');
+      return toast.error('Title và content là bắt buộc');
     }
 
     try {
@@ -69,7 +72,7 @@ export default function NewsManager() {
       load();
     } catch (err) {
       console.error(err);
-      alert('Lỗi khi lưu tin tức');
+      toast.error('Lỗi khi lưu tin tức');
     }
   };
 
@@ -80,7 +83,7 @@ export default function NewsManager() {
       load();
     } catch (err) {
       console.error(err);
-      alert('Lỗi khi xóa');
+      toast.error('Lỗi khi xóa');
     }
   };
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { userApi } from '../../api/userApi';
 import Modal from '../common/Modal';
+import { useToast } from '../../context/ToastContext';
 
 export default function UserManager() {
   const [list, setList] = useState([]);
@@ -10,13 +11,14 @@ export default function UserManager() {
   const [query, setQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [viewUser, setViewUser] = useState(null);
+  const toast = useToast();
 
   const load = async () => {
     setLoading(true);
     try {
       const data = await userApi.getAll();
       setList(data);
-    } catch (err) { console.error(err); alert('Lỗi tải người dùng'); }
+    } catch (err) { console.error(err); toast.error('Lỗi tải người dùng'); }
     finally { setLoading(false); }
   };
 
@@ -27,7 +29,7 @@ export default function UserManager() {
 
   const submit = async (e) => {
     e && e.preventDefault();
-    if (!form.name || !form.email) return alert('Tên và email là bắt buộc');
+    if (!form.name || !form.email) return toast.error('Tên và email là bắt buộc');
     try {
       if (editingId) {
         await userApi.update(editingId, form);
@@ -38,10 +40,10 @@ export default function UserManager() {
       setEditingId(null);
       setShowModal(false);
       load();
-    } catch (err) { console.error(err); alert('Lỗi lưu người dùng'); }
+    } catch (err) { console.error(err); toast.error('Lỗi lưu người dùng'); }
   };
 
-  const remove = async (id) => { if (!confirm('Xác nhận xóa người dùng?')) return; try { await userApi.delete(id); load(); } catch (err) { console.error(err); alert('Lỗi xóa'); } };
+  const remove = async (id) => { if (!confirm('Xác nhận xóa người dùng?')) return; try { await userApi.delete(id); load(); } catch (err) { console.error(err); toast.error('Lỗi xóa'); } };
 
   const filtered = list.filter(u => `${u.name} ${u.email}`.toLowerCase().includes(query.toLowerCase()));
 

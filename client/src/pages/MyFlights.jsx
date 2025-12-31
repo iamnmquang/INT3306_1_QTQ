@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ticketApi } from '../api/ticketApi';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
 
 export default function MyFlights() {
   const [bookings, setBookings] = useState([]);
@@ -10,6 +11,7 @@ export default function MyFlights() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('UPCOMING'); // UPCOMING | CANCELLED
+  const toast = useToast();
 
 
   const [otpState, setOtpState] = useState({ open: false, ticketNumber: null, code: '', loading: false });
@@ -34,31 +36,31 @@ export default function MyFlights() {
   };
 
   const handleRequestCancelCode = async (ticketNumber) => {
-    if (!ticketNumber) return alert('Số vé không hợp lệ');
+    if (!ticketNumber) return toast.error('Số vé không hợp lệ');
     try {
       setOtpState(s => ({ ...s, loading: true }));
       await ticketApi.sendCancelCode(ticketNumber);
       setOtpState({ open: true, ticketNumber, code: '', loading: false });
-      alert('Mã hủy đã được gửi đến email của bạn');
+      toast.success('Mã hủy đã được gửi đến email của bạn');
     } catch (err) {
       setOtpState(s => ({ ...s, loading: false }));
-      alert(err?.response?.data?.message || err.message || 'Không thể gửi mã hủy');
+      toast.error(err?.response?.data?.message || err.message || 'Không thể gửi mã hủy');
     }
   };
 
   const handleConfirmCancelWithCode = async () => {
     const { ticketNumber, code } = otpState;
-    if (!ticketNumber || !code) return alert('Vui lòng nhập mã hủy');
+    if (!ticketNumber || !code) return toast.error('Vui lòng nhập mã hủy');
     try {
       setOtpState(s => ({ ...s, loading: true }));
       await ticketApi.verifyCancelCode(ticketNumber, code);
       await ticketApi.cancelTicket(ticketNumber, code);
       setOtpState({ open: false, ticketNumber: null, code: '', loading: false });
       await reloadBookings();
-      alert('Đã huỷ vé');
+      toast.success('Đã huỷ vé');
     } catch (err) {
       setOtpState(s => ({ ...s, loading: false }));
-      alert(err?.response?.data?.message || err.message || 'Hủy thất bại');
+      toast.error(err?.response?.data?.message || err.message || 'Hủy thất bại');
     }
   };
 
@@ -85,13 +87,13 @@ export default function MyFlights() {
       }
     };
 
-    
-    
+
+
     load();
     return () => (mounted = false);
   }, [user]);
 
- 
+
 
 
   return (

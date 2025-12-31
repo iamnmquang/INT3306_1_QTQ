@@ -153,80 +153,91 @@ export default function SupportChat() {
   // ============= RENDER =============
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="rounded-lg overflow-hidden bg-white shadow-lg flex flex-col h-[600px]">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-          <div className="flex items-center gap-2">
-            <MessageCircle className="w-5 h-5" />
-            <div>
-              <h2 className="font-semibold">Hỗ trợ khách hàng</h2>
-              <p className="text-sm text-blue-100">
-                {adminTyping ? 'Đội hỗ trợ đang nhập...' : 'Nhắn tin trực tiếp với đội hỗ trợ'}
+    <div className="max-w-3xl mx-auto px-4">
+      <div className="h-[620px] bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden border border-slate-200">
+
+        {/* ===== Header ===== */}
+        <div className="relative bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-4 text-white">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+              <MessageCircle className="w-5 h-5" />
+            </div>
+
+            <div className="flex-1">
+              <h2 className="font-semibold leading-tight">
+                Hỗ trợ khách hàng
+              </h2>
+              <p className="text-xs text-white/80">
+                {adminTyping
+                  ? 'Đội hỗ trợ đang nhập…'
+                  : 'Chat trực tiếp với bộ phận hỗ trợ'}
               </p>
             </div>
+
+            <span className="text-xs px-2 py-1 rounded-full bg-white/20">
+              Online
+            </span>
           </div>
         </div>
 
-        {/* Error */}
+        {/* ===== Error ===== */}
         {error && (
-          <div className="p-3 bg-red-50 border-b border-red-200 text-red-700 text-sm">
+          <div className="px-4 py-2 bg-red-50 border-b border-red-200 text-red-700 text-sm">
             {error}
           </div>
         )}
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+        {/* ===== Messages ===== */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-slate-50">
           {loading ? (
             <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="w-10 h-10 rounded-full border-2 border-blue-200 border-t-blue-600 animate-spin" />
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-gray-400">
-              <div className="text-center">
-                <MessageCircle className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                <p>Bắt đầu cuộc trò chuyện</p>
-              </div>
+            <div className="flex flex-col items-center justify-center h-full text-slate-400">
+              <MessageCircle className="w-14 h-14 mb-3 opacity-30" />
+              <p className="text-sm">Bắt đầu cuộc trò chuyện với hỗ trợ</p>
             </div>
           ) : (
-            messages.map(msg => (
-              <div
-                key={msg.id}
-                className={`flex ${
-                  msg.senderRole === 'USER' ? 'justify-end' : 'justify-start'
-                }`}
-              >
+            messages.map(msg => {
+              const isUser = msg.senderRole === 'USER'
+              return (
                 <div
-                  className={`max-w-xs px-4 py-2 rounded-2xl ${
-                    msg.senderRole === 'USER'
-                      ? 'bg-blue-600 text-white rounded-br-none'
-                      : 'bg-white text-gray-900 border border-gray-200 rounded-bl-none'
-                  }`}
+                  key={msg.id}
+                  className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
                 >
-                  <p className="text-sm font-medium mb-1">
-                    {msg.sender.name}
-                  </p>
-                  <p className="text-sm break-words">{msg.content}</p>
-                  <p
-                    className={`text-xs mt-1 text-right ${
-                      msg.senderRole === 'USER'
-                        ? 'text-blue-100'
-                        : 'text-gray-400'
-                    }`}
+                  <div
+                    className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-sm ${isUser
+                        ? 'bg-blue-600 text-white rounded-br-md'
+                        : 'bg-white text-slate-800 border border-slate-200 rounded-bl-md'
+                      }`}
                   >
-                    {formatTime(msg.createdAt)}
-                  </p>
+                    <p className="text-xs font-semibold mb-1 opacity-80">
+                      {msg.sender.name}
+                    </p>
+
+                    <p className="text-sm whitespace-pre-wrap break-words">
+                      {msg.content}
+                    </p>
+
+                    <p
+                      className={`text-[11px] mt-1 text-right ${isUser ? 'text-blue-100' : 'text-slate-400'
+                        }`}
+                    >
+                      {formatTime(msg.createdAt)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))
+              )
+            })
           )}
 
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        <div className="p-4 border-t border-gray-200 bg-white">
-          <div className="flex gap-2">
+        {/* ===== Input ===== */}
+        <div className="px-4 py-3 bg-white border-t border-slate-200">
+          <div className="flex items-center gap-3">
             <input
               type="text"
               value={content}
@@ -237,14 +248,15 @@ export default function SupportChat() {
                   sendMessage()
                 }
               }}
-              placeholder="Nhập tin nhắn..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              placeholder="Nhập tin nhắn…"
               disabled={loading}
+              className="flex-1 px-4 py-2 text-sm border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+
             <button
               onClick={sendMessage}
               disabled={!content.trim() || loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="w-5 h-5" />
             </button>
@@ -253,4 +265,5 @@ export default function SupportChat() {
       </div>
     </div>
   )
+
 }

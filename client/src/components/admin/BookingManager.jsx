@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { ticketApi } from '../../api/ticketApi';
 import Modal from '../common/Modal';
+import { useToast } from '../../context/ToastContext';
 
 export default function BookingManager() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [viewItem, setViewItem] = useState(null);
+  const toast = useToast();
 
   const load = async () => {
     setLoading(true);
     try {
       const data = await ticketApi.getAll();
       setList(data);
-    } catch (err) { console.error(err); alert('Lỗi tải booking'); }
+    } catch (err) { console.error(err); toast.error('Lỗi tải booking'); }
     finally { setLoading(false); }
   };
 
@@ -24,17 +26,17 @@ export default function BookingManager() {
       await ticketApi.update(t.id, { isCancelled: true });
       load();
       setViewItem(null);
-    } catch (err) { console.error(err); alert('Lỗi hủy vé'); }
+    } catch (err) { console.error(err); toast.error('Lỗi hủy vé'); }
   };
 
   const sendETicket = async (t) => {
     try {
       await ticketApi.sendETicket(t.bookingReference);
-      alert('E-ticket đã được gửi');
-    } catch (err) { console.error(err); alert('Lỗi gửi e-ticket'); }
+      toast.success('E-ticket đã được gửi');
+    } catch (err) { console.error(err); toast.error('Lỗi gửi e-ticket'); }
   };
 
-  const remove = async (id) => { if (!confirm('Xác nhận xóa?')) return; try { await ticketApi.delete(id); load(); } catch (err) { console.error(err); alert('Lỗi xóa vé'); } };
+  const remove = async (id) => { if (!confirm('Xác nhận xóa?')) return; try { await ticketApi.delete(id); load(); } catch (err) { console.error(err); toast.error('Lỗi xóa vé'); } };
 
   return (
     <div className="min-h-screen bg-slate-50 py-8">

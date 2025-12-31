@@ -10,6 +10,7 @@ import { flightApi } from '../api/flightApi';
 import { ticketApi } from '../api/ticketApi';
 import { userApi } from '../api/userApi';
 import { aircraftApi } from '../api/aircraftApi';
+import { useToast } from '../context/ToastContext';
 
 const menu = [
   { key: 'overview', label: 'Tổng quan', emoji: '📊' },
@@ -35,6 +36,7 @@ export default function Admin() {
   const [upcomingFlights, setUpcomingFlights] = useState([]);
   const [recentBookings, setRecentBookings] = useState([]);
   const [recentUsers, setRecentUsers] = useState([]);
+  const toast = useToast();
 
   /* ======================
       Load overview
@@ -76,7 +78,7 @@ export default function Admin() {
         setRecentUsers(recentU);
       } catch (err) {
         console.error('Overview load error', err);
-        alert('Lỗi tải dữ liệu tổng quan');
+        toast.error('Lỗi tải dữ liệu tổng quan');
       } finally {
         setLoadingOverview(false);
       }

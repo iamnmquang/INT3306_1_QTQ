@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
+
 import Register from './pages/Register';
 import VerifyRegisterEmail from './pages/VerifyRegisterEmail';
 import Login from './pages/Login';
@@ -22,38 +24,72 @@ import NewsDetail from './pages/NewsDetail';
 import Admin from './pages/Admin';
 import AdminRoute from './components/common/AdminRoute';
 
-
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Header />
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/verify-register-email" element={<VerifyRegisterEmail />} />
+      <ToastProvider>
+        <AuthProvider>
+          <Header />
 
-          {/* Protected */}
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route
+              path="/verify-register-email"
+              element={<VerifyRegisterEmail />}
+            />
 
-          <Route path="/select-flight" element={<SelectFlight />} />
-          <Route path="/book" element={<Book />} />
-          <Route path="/booking-success" element={<BookingSuccess />} />
-          <Route path="/my-flights" element={<ProtectedRoute><MyFlights /></ProtectedRoute>} />
-          <Route path="/support-chat" element={<ProtectedRoute><SupportChat /></ProtectedRoute>} />
-          <Route path="/news" element={<News />} />
-          <Route path="/news/:id" element={<NewsDetail />} />
-          <Route path="/booking-search" element={<BookingSearch />} />
+            {/* Protected */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Admin */}
-          <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+            <Route path="/select-flight" element={<SelectFlight />} />
+            <Route path="/book" element={<Book />} />
+            <Route path="/booking-success" element={<BookingSuccess />} />
+            <Route
+              path="/my-flights"
+              element={
+                <ProtectedRoute>
+                  <MyFlights />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/support-chat"
+              element={
+                <ProtectedRoute>
+                  <SupportChat />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* 404 */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AuthProvider>
+            <Route path="/news" element={<News />} />
+            <Route path="/news/:id" element={<NewsDetail />} />
+            <Route path="/booking-search" element={<BookingSearch />} />
+
+            {/* Admin */}
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <Admin />
+                </AdminRoute>
+              }
+            />
+
+            {/* 404 */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }

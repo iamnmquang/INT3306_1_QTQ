@@ -32,54 +32,129 @@ export default function Filters({ onChange, minPrice: propMinPrice = 0, maxPrice
   };
 
   return (
-    <div className="bg-white p-4 rounded-md shadow-sm">
-      <h3 className="font-medium mb-3">Bộ lọc & Sắp xếp</h3>
+    <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-slate-200 shadow-sm p-5">
+      <h3 className="font-semibold text-lg mb-5 text-slate-800">
+        Bộ lọc & Sắp xếp
+      </h3>
 
-      <div className="mb-3">
-        <label className="block text-sm text-gray-600 mb-1">Khoảng giá</label>
-        <div className="flex items-center gap-2 mb-2">
-          <input type="number" className="w-1/2 border px-2 py-1 rounded-md" value={minPrice} onChange={e => setMinPrice(e.target.value)} min={propMinPrice} max={propMaxPrice} />
-          <input type="number" className="w-1/2 border px-2 py-1 rounded-md" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} min={propMinPrice} max={propMaxPrice} />
+      {/* Price range */}
+      <div className="mb-5">
+        <label className="block text-sm font-medium text-slate-600 mb-2">
+          Khoảng giá
+        </label>
+
+        <div className="flex items-center gap-2 mb-3">
+          <input
+            type="number"
+            className="w-1/2 border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+            value={minPrice}
+            onChange={e => setMinPrice(e.target.value)}
+            min={propMinPrice}
+            max={propMaxPrice}
+          />
+          <input
+            type="number"
+            className="w-1/2 border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+            value={maxPrice}
+            onChange={e => setMaxPrice(e.target.value)}
+            min={propMinPrice}
+            max={propMaxPrice}
+          />
         </div>
 
-        <div className="mb-3">
-          <input type="range" min={propMinPrice} max={propMaxPrice} value={minPrice} onChange={e => setMinPrice(e.target.value)} className="w-full" />
-          <input type="range" min={propMinPrice} max={propMaxPrice} value={maxPrice} onChange={e => setMaxPrice(e.target.value)} className="w-full mt-1" />
+        <div className="space-y-2 mb-2">
+          <input
+            type="range"
+            min={propMinPrice}
+            max={propMaxPrice}
+            value={minPrice}
+            onChange={e => setMinPrice(e.target.value)}
+            className="w-full accent-indigo-600"
+          />
+          <input
+            type="range"
+            min={propMinPrice}
+            max={propMaxPrice}
+            value={maxPrice}
+            onChange={e => setMaxPrice(e.target.value)}
+            className="w-full accent-indigo-600"
+          />
         </div>
 
-        <div className="text-sm text-gray-600 mb-2">Từ {Number(minPrice).toLocaleString()}₫ — Đến {Number(maxPrice).toLocaleString()}₫</div>
+        <div className="text-sm text-slate-500">
+          {Number(minPrice).toLocaleString()}₫ — {Number(maxPrice).toLocaleString()}₫
+        </div>
       </div>
 
-      <div className="mb-3">
-        <label className="block text-sm text-gray-600 mb-1">Giờ đi (khoảng)</label>
+      {/* Time range */}
+      <div className="mb-5">
+        <label className="block text-sm font-medium text-slate-600 mb-2">
+          Giờ khởi hành
+        </label>
         <div className="flex gap-2">
-          <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="w-1/2 border px-2 py-1 rounded-md" />
-          <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="w-1/2 border px-2 py-1 rounded-md" />
+          <input
+            type="time"
+            value={startTime}
+            onChange={e => setStartTime(e.target.value)}
+            className="w-1/2 border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+          />
+          <input
+            type="time"
+            value={endTime}
+            onChange={e => setEndTime(e.target.value)}
+            className="w-1/2 border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+          />
         </div>
       </div>
 
-      <div className="mb-3">
-        <label className="block text-sm text-gray-600 mb-1">Sắp xếp</label>
-        <select value={sort} onChange={e => setSort(e.target.value)} className="w-full border px-2 py-1 rounded-md">
-          <option value="price-asc">Giá: Thấp → Cao</option>
-          <option value="price-desc">Giá: Cao → Thấp</option>
-          <option value="time-asc">Giờ đi: Sớm → Muộn</option>
+      {/* Sort */}
+      <div className="mb-5">
+        <label className="block text-sm font-medium text-slate-600 mb-2">
+          Sắp xếp theo
+        </label>
+        <select
+          value={sort}
+          onChange={e => setSort(e.target.value)}
+          className="w-full border rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+        >
+          <option value="price-asc">Giá thấp → cao</option>
+          <option value="price-desc">Giá cao → thấp</option>
+          <option value="time-asc">Giờ đi sớm → muộn</option>
         </select>
       </div>
 
-      <div className="mb-3">
-        <label className="block text-sm text-gray-600 mb-1">Điểm dừng</label>
-        <select value={stops} onChange={e => setStops(e.target.value)} className="w-full border px-2 py-1 rounded-md">
+      {/* Stops */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-slate-600 mb-2">
+          Điểm dừng
+        </label>
+        <select
+          value={stops}
+          onChange={e => setStops(e.target.value)}
+          className="w-full border rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+        >
           <option value="any">Bất kỳ</option>
-          <option value="0">Trực tiếp (0 dừng)</option>
+          <option value="0">Bay thẳng</option>
           <option value="1">1 điểm dừng</option>
         </select>
       </div>
 
-      <div className="flex gap-2">
-        <button onClick={apply} className="flex-1 bg-blue-600 text-white py-2 rounded-md">Áp dụng</button>
-        <button onClick={reset} className="flex-1 border py-2 rounded-md">Reset</button>
+      {/* Actions */}
+      <div className="flex gap-3">
+        <button
+          onClick={apply}
+          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-medium transition"
+        >
+          Áp dụng
+        </button>
+        <button
+          onClick={reset}
+          className="flex-1 border border-slate-300 hover:bg-slate-50 py-2.5 rounded-xl font-medium transition"
+        >
+          Reset
+        </button>
       </div>
     </div>
   );
+
 }

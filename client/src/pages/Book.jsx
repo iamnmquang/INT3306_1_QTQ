@@ -4,11 +4,13 @@ import { flightApi } from '../api/flightApi';
 import { flightSeatApi } from '../api/flightSeatApi';
 import { ticketApi } from '../api/ticketApi';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 export default function Book() {
   const location = useLocation();
   const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
+  const toast = useToast();
 
   const flightId = params.get('flightId');
   const flightSeatId = Number(params.get('flightSeatId')) || null;
@@ -80,7 +82,7 @@ export default function Book() {
     }
 
     if (selectedSeats.length !== passengerData.length) {
-      alert('Vui lòng chọn đủ số ghế cho hành khách');
+      toast.error('Vui lòng chọn đủ số ghế cho hành khách');
       return;
     }
 
@@ -88,13 +90,13 @@ export default function Book() {
     try {
       const res = await flightSeatApi.lockSeats(selectedSeats);
       // locked seats returned
-      alert(res.message);
+      toast.success(res.message);
       setLockedSeats(res.seats.map(s => s.id));
       // refresh available seats
       const refreshed = await flightSeatApi.getAvailableSeats(selectedClassId);
       setAvailableSeats(refreshed.seats);
     } catch (err) {
-      alert(err?.response?.data?.message || err.message || 'Lỗi khi khoá ghế');
+      toast.error(err?.response?.data?.message || err.message || 'Lỗi khi khoá ghế');
     } finally {
       setLoading(false);
     }
@@ -108,7 +110,7 @@ export default function Book() {
     }
 
     if (selectedSeats.length !== passengerData.length) {
-      alert('Vui lòng chọn đủ ghế');
+      toast.error('Vui lòng chọn đủ ghế');
       return;
     }
 
@@ -128,7 +130,7 @@ export default function Book() {
         throw new Error('Không tạo được vé');
       }
 
-      alert(res.message || 'Booking successful');
+      toast.success(res.message || 'Booking successful');
       // unlock our locked seats reference so cleanup won't try to unlock again
       setLockedSeats([]);
       // send e-ticket email (fire-and-forget)
@@ -141,7 +143,7 @@ export default function Book() {
       // navigate to booking success page showing booking ref
       navigate(`/booking-success?ref=${bookingRef}`);
     } catch (err) {
-      alert(err?.response?.data?.message || err.message || 'Booking failed');
+      toast.error(err?.response?.data?.message || err.message || 'Booking failed');
       // try to unlock seats we locked earlier to avoid leaving them locked
       try {
         if (lockedSeats.length > 0) {
@@ -179,150 +181,305 @@ export default function Book() {
   const totalPrice = pricePerSeat * passengers;
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-semibold mb-4">Đặt chỗ</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+      <div className="max-w-4xl mx-auto px-6 py-10">
+        <h1 className="text-3xl font-bold mb-6">Đặt chỗ</h1>
 
-      {loading && <div>Đang xử lý...</div>}
-      {error && <div className="text-red-600">{error}</div>}
+        {loading && (
+          <div className="mb-4 text-slate-600">Đang xử lý…</div>
+        )}
+        {error && (
+          <div className="mb-4 text-red-600 font-medium">{error}</div>
+        )}
 
-      {flight && (
-        <div className="bg-white p-6 rounded-md shadow">
-          {/* Step indicator */}
-          <div className="flex items-center gap-4 mb-4">
-            <div className={`px-3 py-1 rounded ${step === 'review' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>1. Xác nhận</div>
-            <div className={`px-3 py-1 rounded ${step === 'passenger' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>2. Hành khách</div>
-            <div className={`px-3 py-1 rounded ${step === 'seats' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>3. Chỗ ngồi</div>
-            <div className={`px-3 py-1 rounded ${step === 'confirm' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>4. Xác nhận</div>
-          </div>
-
-          {/* Review / Itinerary */}
-          {step === 'review' && (
-            <div>
-              <div className="mb-4">
-                <div className="text-lg font-semibold">{flight.flightNumber} — {flight.aircraft?.name}</div>
-                <div className="text-sm text-gray-600">{flight.departureAirport?.iataCode} → {flight.arrivalAirport?.iataCode} • {new Date(flight.departureTime).toLocaleString()}</div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm text-gray-600 mb-1">Hạng giá đã chọn</label>
-                <div className="flex gap-2 items-center">
-                  <div className="px-3 py-2 border rounded-md font-medium">{selectedSeatClass?.seatClass || '—'}</div>
-                  <div className="px-3 py-2 border rounded-md">{pricePerSeat.toLocaleString()}₫ / hành khách</div>
-                  <div className="px-3 py-2 border rounded-md">Tổng: <strong>{totalPrice.toLocaleString()}₫</strong></div>
-                </div>
-              </div>
-
-              <div className="flex gap-2 justify-end">
-                <button onClick={() => setShowItinerary(true)} className="px-3 py-2 border rounded-md">Chi tiết hành trình</button>
-                <button onClick={goBackToSelect} className="px-3 py-2 border rounded-md">Thay đổi chuyến bay</button>
-                <button onClick={() => {
-                  if (user) return setStep('passenger');
-                  navigate('/login', { state: { from: location } });
-
-
-                }} className="px-4 py-2 bg-blue-600 text-white rounded-md">Đăng nhập và tiếp tục</button>
-              </div>
-
-              {showItinerary && (
-                <div className="mt-4 border p-4 rounded bg-gray-50">
-                  <h4 className="font-medium mb-2">Thông tin hành trình</h4>
-                  <div>Chuyến bay: {flight.flightNumber}</div>
-                  <div>Máy bay: {flight.aircraft?.name}</div>
-                  <div>Khởi hành: {flight.departureAirport?.city} ({flight.departureAirport?.iataCode}) — {new Date(flight.departureTime).toLocaleString()}</div>
-                  <div>Đến: {flight.arrivalAirport?.city} ({flight.arrivalAirport?.iataCode}) — {new Date(flight.arrivalTime).toLocaleString()}</div>
-                  <div className="mt-2 text-sm text-gray-600">Điều kiện vé: {selectedSeatClass?.fareRules || 'Xem chi tiết giá vé'}</div>
-                  <div className="flex justify-end mt-3">
-                    <button onClick={() => setShowItinerary(false)} className="px-3 py-2 border rounded-md">Đóng</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Passenger info */}
-          {step === 'passenger' && (
-            <div>
-              <h3 className="font-medium mb-2">Nhập thông tin hành khách</h3>
-              {passengerData.map((p, idx) => (
-                <div key={idx} className="mb-2">
-                  <label className="block text-sm text-gray-600">Hành khách {idx + 1}</label>
-                  <input value={p.fullName} onChange={(e) => {
-                    const arr = [...passengerData];
-                    arr[idx].fullName = e.target.value;
-                    setPassengerData(arr);
-                  }} className="w-full border px-2 py-1 rounded-md mb-1" />
-                  <input value={p.email || ''} onChange={(e) => {
-                    const arr = [...passengerData];
-                    arr[idx].email = e.target.value;
-                    setPassengerData(arr);
-                  }} placeholder="Email (tùy chọn)" className="w-full border px-2 py-1 rounded-md text-sm" />
+        {flight && (
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+            {/* ===== STEP INDICATOR ===== */}
+            <div className="flex flex-wrap items-center gap-3 mb-8">
+              {[
+                { key: 'review', label: '1. Xác nhận' },
+                { key: 'passenger', label: '2. Hành khách' },
+                { key: 'seats', label: '3. Chỗ ngồi' },
+                { key: 'confirm', label: '4. Hoàn tất' },
+              ].map(s => (
+                <div
+                  key={s.key}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium
+                  ${step === s.key
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-100 text-slate-600'
+                    }`}
+                >
+                  {s.label}
                 </div>
               ))}
-
-              <div className="flex gap-2 justify-end mt-4">
-                <button onClick={() => setStep('review')} className="px-3 py-2 border rounded-md">Quay lại</button>
-                <button onClick={async () => {
-                  // only allow logged-in users to proceed to seat selection
-                  if (!user) {
-                    navigate('/login', { state: { from: location } });
-                    return;
-                  }
-
-                  setStep('seats');
-                }} className="px-4 py-2 bg-blue-600 text-white rounded-md">Tiếp tục</button>
-              </div>
             </div>
-          )}
 
-          {/* Seat selection (extras) */}
-          {step === 'seats' && (
-            <div>
-              <h3 className="font-medium mb-2">Chọn chỗ ngồi — ({selectedSeats.length}/{passengerData.length})</h3>
-              <div className="grid grid-cols-6 gap-2 mb-4">
-                {availableSeats.map(s => (
-                  <button key={s.id}
-                    onClick={() => toggleSeat(s.id)}
-                    disabled={s.isBooked || s.isLocked}
-                    className={`px-2 py-1 border rounded text-sm ${selectedSeats.includes(s.id) ? 'bg-blue-600 text-white' : s.isBooked ? 'bg-red-100 text-red-600 cursor-not-allowed' : s.isLocked ? 'bg-yellow-100 text-yellow-800 cursor-not-allowed' : ''}`}>
-                    {s.seatNumber}
+            {/* ===== REVIEW ===== */}
+            {step === 'review' && (
+              <div>
+                <div className="mb-6">
+                  <div className="text-lg font-semibold">
+                    {flight.flightNumber} — {flight.aircraft?.name}
+                  </div>
+                  <div className="text-sm text-slate-600">
+                    {flight.departureAirport?.iataCode} → {flight.arrivalAirport?.iataCode} •{' '}
+                    {new Date(flight.departureTime).toLocaleString()}
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-4 mb-6">
+                  <div className="border rounded-xl p-4">
+                    <p className="text-xs text-slate-500 mb-1">Hạng vé</p>
+                    <p className="font-semibold">
+                      {selectedSeatClass?.seatClass || '—'}
+                    </p>
+                  </div>
+
+                  <div className="border rounded-xl p-4">
+                    <p className="text-xs text-slate-500 mb-1">Giá / khách</p>
+                    <p className="font-semibold">
+                      {pricePerSeat.toLocaleString()}₫
+                    </p>
+                  </div>
+
+                  <div className="border rounded-xl p-4 bg-indigo-50 border-indigo-100">
+                    <p className="text-xs text-slate-500 mb-1">Tổng tiền</p>
+                    <p className="font-bold text-indigo-700 text-lg">
+                      {totalPrice.toLocaleString()}₫
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 justify-end">
+                  <button
+                    onClick={() => setShowItinerary(true)}
+                    className="px-4 py-2 rounded-xl border hover:bg-slate-50"
+                  >
+                    Chi tiết hành trình
                   </button>
-                ))}
-              </div>
 
-              <div className="mb-4">
-                <button onClick={handleLockSeats} disabled={loading} className="px-4 py-2 bg-yellow-500 text-black rounded-md mr-2">Khoá ghế</button>
-                <button onClick={() => {
-                  if (selectedSeats.length !== passengerData.length) return alert('Vui lòng chọn đủ ghế');
-                  // Ensure seats are locked by current user
-                  const unlocked = selectedSeats.filter(id => !lockedSeats.includes(id));
-                  if (unlocked.length > 0) return alert('Vui lòng khoá ghế trước khi tiếp tục');
-                  setStep('confirm');
-                }} className="px-4 py-2 bg-blue-600 text-white rounded-md">Tiếp tục</button>
-              </div>
-            </div>
-          )}
+                  <button
+                    onClick={goBackToSelect}
+                    className="px-4 py-2 rounded-xl border hover:bg-slate-50"
+                  >
+                    Thay đổi chuyến bay
+                  </button>
 
-          {/* Confirmation */}
-          {step === 'confirm' && (
-            <div>
-              <h3 className="font-medium mb-2">Xác nhận đặt chỗ</h3>
-              <div className="mb-2">Tổng tiền: <strong>{totalPrice.toLocaleString()}₫</strong></div>
-              <div className="mb-4">
-                <div className="font-medium mb-1">Hành khách & ghế</div>
-                {selectedSeats.map((sId, idx) => {
-                  const seat = availableSeats.find(s => s.id === sId) || { seatNumber: '—' };
-                  return (<div key={sId}>{passengerData[idx]?.fullName || '—'} — Ghế: {seat.seatNumber}</div>);
-                })}
-              </div>
+                  <button
+                    onClick={() => {
+                      if (user) return setStep('passenger');
+                      navigate('/login', { state: { from: location } });
+                    }}
+                    className="px-5 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"
+                  >
+                    Đăng nhập & tiếp tục
+                  </button>
+                </div>
 
-              <div className="flex gap-2 justify-end">
-                <button onClick={() => setStep('seats')} className="px-3 py-2 border rounded-md">Quay lại</button>
-                <button onClick={handleConfirm} disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded-md">Xác nhận và gửi email</button>
+                {showItinerary && (
+                  <div className="mt-6 bg-slate-50 border rounded-xl p-5">
+                    <h4 className="font-semibold mb-3">Thông tin hành trình</h4>
+                    <div className="text-sm space-y-1 text-slate-700">
+                      <div>Chuyến bay: {flight.flightNumber}</div>
+                      <div>Máy bay: {flight.aircraft?.name}</div>
+                      <div>
+                        Khởi hành: {flight.departureAirport?.city} (
+                        {flight.departureAirport?.iataCode}) —{' '}
+                        {new Date(flight.departureTime).toLocaleString()}
+                      </div>
+                      <div>
+                        Đến: {flight.arrivalAirport?.city} (
+                        {flight.arrivalAirport?.iataCode}) —{' '}
+                        {new Date(flight.arrivalTime).toLocaleString()}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-2">
+                        Điều kiện vé: {selectedSeatClass?.fareRules || 'Xem chi tiết'}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end mt-4">
+                      <button
+                        onClick={() => setShowItinerary(false)}
+                        className="px-4 py-2 rounded-xl border"
+                      >
+                        Đóng
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+
+            {/* ===== PASSENGER ===== */}
+            {step === 'passenger' && (
+              <div>
+                <h3 className="font-semibold mb-4">Thông tin hành khách</h3>
+
+                <div className="space-y-4">
+                  {passengerData.map((p, idx) => (
+                    <div key={idx} className="border rounded-xl p-4">
+                      <label className="block text-sm text-slate-600 mb-2">
+                        Hành khách {idx + 1}
+                      </label>
+
+                      <input
+                        value={p.fullName}
+                        onChange={(e) => {
+                          const arr = [...passengerData];
+                          arr[idx].fullName = e.target.value;
+                          setPassengerData(arr);
+                        }}
+                        placeholder="Họ và tên"
+                        className="w-full border rounded-lg px-3 py-2 mb-2"
+                      />
+
+                      <input
+                        value={p.email || ''}
+                        onChange={(e) => {
+                          const arr = [...passengerData];
+                          arr[idx].email = e.target.value;
+                          setPassengerData(arr);
+                        }}
+                        placeholder="Email (tuỳ chọn)"
+                        className="w-full border rounded-lg px-3 py-2 text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-end gap-2 mt-6">
+                  <button
+                    onClick={() => setStep('review')}
+                    className="px-4 py-2 rounded-xl border"
+                  >
+                    Quay lại
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (!user) {
+                        navigate('/login', { state: { from: location } });
+                        return;
+                      }
+                      setStep('seats');
+                    }}
+                    className="px-5 py-2 rounded-xl bg-indigo-600 text-white"
+                  >
+                    Tiếp tục
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ===== SEATS ===== */}
+            {step === 'seats' && (
+              <div>
+                <h3 className="font-semibold mb-4">
+                  Chọn chỗ ngồi ({selectedSeats.length}/{passengerData.length})
+                </h3>
+
+                <div className="grid grid-cols-6 gap-2 mb-6">
+                  {availableSeats.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => toggleSeat(s.id)}
+                      disabled={s.isBooked || s.isLocked}
+                      className={`py-2 rounded-lg text-sm border
+                      ${selectedSeats.includes(s.id)
+                          ? 'bg-indigo-600 text-white'
+                          : s.isBooked
+                            ? 'bg-red-100 text-red-600 cursor-not-allowed'
+                            : s.isLocked
+                              ? 'bg-yellow-100 text-yellow-700 cursor-not-allowed'
+                              : 'hover:bg-slate-50'
+                        }`}
+                    >
+                      {s.seatNumber}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-2 justify-end">
+                  <button
+                    onClick={handleLockSeats}
+                    disabled={loading}
+                    className="px-4 py-2 rounded-xl bg-amber-500 text-black"
+                  >
+                    Khoá ghế
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (selectedSeats.length !== passengerData.length)
+                        return toast.error('Vui lòng chọn đủ ghế');
+
+                      const unlocked = selectedSeats.filter(
+                        id => !lockedSeats.includes(id)
+                      );
+                      if (unlocked.length > 0)
+                        return toast.error('Vui lòng khoá ghế trước');
+
+                      setStep('confirm');
+                    }}
+                    className="px-5 py-2 rounded-xl bg-indigo-600 text-white"
+                  >
+                    Tiếp tục
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ===== CONFIRM ===== */}
+            {step === 'confirm' && (
+              <div>
+                <h3 className="font-semibold mb-4">Xác nhận đặt chỗ</h3>
+
+                <div className="mb-4 text-lg">
+                  Tổng tiền:{' '}
+                  <strong className="text-indigo-700">
+                    {totalPrice.toLocaleString()}₫
+                  </strong>
+                </div>
+
+                <div className="border rounded-xl p-4 mb-6">
+                  <div className="font-medium mb-2">Hành khách & ghế</div>
+                  <div className="text-sm space-y-1">
+                    {selectedSeats.map((sId, idx) => {
+                      const seat =
+                        availableSeats.find(s => s.id === sId) || {};
+                      return (
+                        <div key={sId}>
+                          {passengerData[idx]?.fullName || '—'} — Ghế:{' '}
+                          {seat.seatNumber || '—'}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setStep('seats')}
+                    className="px-4 py-2 rounded-xl border"
+                  >
+                    Quay lại
+                  </button>
+
+                  <button
+                    onClick={handleConfirm}
+                    disabled={loading}
+                    className="px-5 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700"
+                  >
+                    Xác nhận & gửi email
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
+
 }

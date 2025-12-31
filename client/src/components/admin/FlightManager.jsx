@@ -3,6 +3,7 @@ import { flightApi } from '../../api/flightApi';
 import { aircraftApi } from '../../api/aircraftApi';
 import { airportApi } from '../../api/airportApi';
 import Modal from '../common/Modal';
+import { useToast } from '../../context/ToastContext';
 
 export default function FlightManager() {
   const [list, setList] = useState([]);
@@ -12,6 +13,7 @@ export default function FlightManager() {
   const [form, setForm] = useState({ flightNumber: '', aircraftId: null, departureAirportId: null, arrivalAirportId: null, departureTime: '', arrivalTime: '', status: 'SCHEDULED' });
   const [editingId, setEditingId] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const toast = useToast();
 
   const load = async () => {
     setLoading(true);
@@ -20,7 +22,7 @@ export default function FlightManager() {
       setAirports(await airportApi.getAll());
       const data = await flightApi.getAll();
       setList(data);
-    } catch (err) { console.error(err); alert('Lỗi tải chuyến bay'); }
+    } catch (err) { console.error(err); toast.error('Lỗi tải chuyến bay'); }
     finally { setLoading(false); }
   };
 
@@ -31,7 +33,7 @@ export default function FlightManager() {
 
   const submit = async (e) => {
     e && e.preventDefault();
-    if (!form.flightNumber) return alert('Số hiệu chuyến là bắt buộc');
+    if (!form.flightNumber) return toast.error('Số hiệu chuyến là bắt buộc');
     try {
       if (editingId) await flightApi.update(editingId, form);
       else await flightApi.create(form);
@@ -39,10 +41,10 @@ export default function FlightManager() {
       setEditingId(null);
       setShowModal(false);
       load();
-    } catch (err) { console.error(err); alert('Lỗi lưu chuyến bay'); }
+    } catch (err) { console.error(err); toast.error('Lỗi lưu chuyến bay'); }
   };
 
-  const remove = async (id) => { if (!confirm('Xác nhận xóa?')) return; try { await flightApi.delete(id); load(); } catch (err) { console.error(err); alert('Lỗi xóa'); } };
+  const remove = async (id) => { if (!confirm('Xác nhận xóa?')) return; try { await flightApi.delete(id); load(); } catch (err) { console.error(err); toast.error('Lỗi xóa'); } };
 
   const delayFlight = async (f) => {
     const newTime = prompt('Nhập giờ khởi hành mới (ISO hoặc "YYYY-MM-DDTHH:mm")', f.departureTime);
@@ -50,7 +52,7 @@ export default function FlightManager() {
     try {
       await flightApi.update(f.id, { ...f, departureTime: newTime });
       load();
-    } catch (err) { console.error(err); alert('Lỗi cập nhật thời gian'); }
+    } catch (err) { console.error(err); toast.error('Lỗi cập nhật thời gian'); }
   };
 
   return (
