@@ -86,85 +86,100 @@ export default function Admin() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white pt-10">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="bg-white rounded-xl shadow p-6">
-          <div className="flex gap-6">
-            {/* Sidebar */}
-            <aside className="w-56 border-r pr-4">
-              <h2 className="text-xl font-semibold mb-4">Admin</h2>
-              <nav className="flex flex-col gap-2">
-                {menu.map(m => (
-                  <button
-                    key={m.key}
-                    onClick={() => setTab(m.key)}
-                    className={`text-left px-3 py-2 rounded-md w-full ${tab === m.key
-                      ? 'bg-blue-600 text-white'
-                      : 'hover:bg-gray-100'
-                      }`}
-                  >
-                    <span className="mr-2">{m.emoji}</span>
-                    {m.label}
-                  </button>
-                ))}
-              </nav>
-            </aside>
+    <div className="min-h-screen bg-slate-50 py-8">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex gap-6">
+          {/* Sidebar */}
+          <aside className="w-64 bg-white rounded-xl border border-slate-200 p-4">
+            <h2 className="text-xl font-bold text-slate-900 mb-6">
+              Admin Panel
+            </h2>
+            <nav className="flex flex-col gap-1">
+              {menu.map(m => (
+                <button
+                  key={m.key}
+                  onClick={() => setTab(m.key)}
+                  className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition
+                  ${tab === m.key
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white'
+                      : 'text-slate-700 hover:bg-slate-100'
+                    }`}
+                >
+                  <span className="text-lg">{m.emoji}</span>
+                  {m.label}
+                </button>
+              ))}
+            </nav>
+          </aside>
 
-            {/* Content */}
-            <main className="flex-1">
-              {tab === 'overview' && (
+          {/* Content */}
+          <main className="flex-1">
+            {/* Overview */}
+            {tab === 'overview' && (
+              <div className="space-y-8">
+                {/* Header */}
                 <div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="p-4 bg-white rounded-lg shadow">
-                      <div className="text-sm text-gray-500">Chuyến bay</div>
-                      <div className="text-2xl font-bold">
-                        {loadingOverview ? '...' : stats.flights}
-                      </div>
-                      <div className="text-xs text-gray-400 mt-2">
-                        Upcoming: {upcomingFlights.length}
-                      </div>
-                    </div>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-1">
+                    Tổng quan quản trị
+                  </h1>
+                  <p className="text-slate-600">
+                    Thống kê nhanh hệ thống
+                  </p>
+                </div>
 
-                    <div className="p-4 bg-white rounded-lg shadow">
-                      <div className="text-sm text-gray-500">Vé đã đặt</div>
-                      <div className="text-2xl font-bold">
-                        {loadingOverview ? '...' : stats.tickets}
-                      </div>
-                      <div className="text-xs text-gray-400 mt-2">
-                        Recent: {recentBookings.length}
-                      </div>
+                {/* Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="bg-white rounded-xl border border-slate-200 p-6">
+                    <div className="text-sm text-slate-500 mb-1">Chuyến bay</div>
+                    <div className="text-2xl font-bold text-slate-900">
+                      {loadingOverview ? '...' : stats.flights}
                     </div>
-
-                    <div className="p-4 bg-white rounded-lg shadow">
-                      <div className="text-sm text-gray-500">Người dùng</div>
-                      <div className="text-2xl font-bold">
-                        {loadingOverview ? '...' : stats.users}
-                      </div>
-                      <div className="text-xs text-gray-400 mt-2">
-                        Recent: {recentUsers.length}
-                      </div>
+                    <div className="text-xs text-slate-400 mt-2">
+                      Sắp tới: {upcomingFlights.length}
                     </div>
+                  </div>
 
-                    <div className="p-4 bg-white rounded-lg shadow">
-                      <div className="text-sm text-gray-500">Tàu bay</div>
-                      <div className="text-2xl font-bold">
-                        {loadingOverview ? '...' : stats.aircraft}
-                      </div>
+                  <div className="bg-white rounded-xl border border-slate-200 p-6">
+                    <div className="text-sm text-slate-500 mb-1">Vé đã đặt</div>
+                    <div className="text-2xl font-bold text-slate-900">
+                      {loadingOverview ? '...' : stats.tickets}
+                    </div>
+                    <div className="text-xs text-slate-400 mt-2">
+                      Gần đây: {recentBookings.length}
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-slate-200 p-6">
+                    <div className="text-sm text-slate-500 mb-1">Người dùng</div>
+                    <div className="text-2xl font-bold text-slate-900">
+                      {loadingOverview ? '...' : stats.users}
+                    </div>
+                    <div className="text-xs text-slate-400 mt-2">
+                      Mới: {recentUsers.length}
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-slate-200 p-6">
+                    <div className="text-sm text-slate-500 mb-1">Tàu bay</div>
+                    <div className="text-2xl font-bold text-slate-900">
+                      {loadingOverview ? '...' : stats.aircraft}
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {tab === 'news' && <NewsManager />}
-              {tab === 'aircraft' && <AircraftManager />}
-              {tab === 'flights' && <FlightManager />}
-              {tab === 'bookings' && <BookingManager />}
-              {tab === 'users' && <UserManager />}
-              {tab === 'chat' && <SupportManager />}
-            </main>
-          </div>
+            {/* Tabs */}
+            {tab === 'news' && <NewsManager />}
+            {tab === 'aircraft' && <AircraftManager />}
+            {tab === 'flights' && <FlightManager />}
+            {tab === 'bookings' && <BookingManager />}
+            {tab === 'users' && <UserManager />}
+            {tab === 'chat' && <SupportManager />}
+          </main>
         </div>
       </div>
     </div>
   );
+
 }

@@ -1,7 +1,7 @@
 const prisma = require('../../utils/prisma')
 
 const ChatService = {
- 
+
   /**
    * Kiểm tra user có quyền truy cập room này không
    */
@@ -42,7 +42,7 @@ const ChatService = {
     return msg
   },
 
-  
+
   getOrCreateRoom: async (userId) => {
     let chatRoom = await prisma.chatRoom.findFirst({
       where: { userId },
@@ -115,7 +115,7 @@ const ChatService = {
     }))
   },
 
- 
+
 
   getMessages: async (roomId) => {
     return prisma.chatMessage.findMany({
@@ -258,14 +258,13 @@ const ChatService = {
     return updated
   },
 
- 
+
 
   /**
    * Mark messages as read
    * 
    */
-  markMessagesRead: async (roomId, forUserId) => {
-    // ✅ FIX: Validate room access trước
+  markMessagesRead: async (roomId, forUserId, role) => {
     const room = await prisma.chatRoom.findUnique({
       where: { id: roomId }
     })
@@ -274,21 +273,29 @@ const ChatService = {
       throw new Error('Room not found')
     }
 
-    // User chỉ có thể mark read room của chính mình
-    if (room.userId !== forUserId) {
+    // USER chỉ được mark room của mình
+    if (role === 'USER' && room.userId !== forUserId) {
       throw new Error('Access denied')
     }
 
-    const result = await prisma.chatMessage.updateMany({
-      where: {
-        roomId,
-        senderId: { not: forUserId },
-        isRead: false
-      },
+    // Xác định mark read theo role
+    let whereCondition = {
+      roomId,
+      isRead: false
+    }
+
+    if (role === 'USER') {
+      // USER đọc tin của ADMIN
+      whereCondition.senderRole = 'ADMIN'
+    } else if (role === 'ADMIN') {
+      // ADMIN đọc tin của USER
+      whereCondition.senderRole = 'USER'
+    }
+
+    return prisma.chatMessage.updateMany({
+      where: whereCondition,
       data: { isRead: true }
     })
-
-    return result
   },
 
   /**
@@ -339,42 +346,42 @@ const ChatService = {
     return result
   },
 
- /**
- * Admin get chi tiết room + messages
- */
-getAdminChatRoom: async (roomId) => {
-  const room = await prisma.chatRoom.findUnique({
-    where: { id: roomId },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        }
-      },
-      messages: {
-        orderBy: { createdAt: 'asc' },
-        include: {
-          sender: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true
+  /**
+  * Admin get chi tiết room + messages
+  */
+  getAdminChatRoom: async (roomId) => {
+    const room = await prisma.chatRoom.findUnique({
+      where: { id: roomId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          }
+        },
+        messages: {
+          orderBy: { createdAt: 'asc' },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true
+              }
             }
           }
         }
       }
+    })
+
+    if (!room) {
+      throw new Error('Room not found')
     }
-  })
 
-  if (!room) {
-    throw new Error('Room not found')
+    return room
   }
-
-  return room
-}
 }
 
 module.exports = ChatService

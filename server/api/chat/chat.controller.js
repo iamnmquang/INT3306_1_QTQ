@@ -239,7 +239,12 @@ const ChatController = {
         })
       }
 
-      const result = await ChatService.markMessagesRead(roomId, userId)
+      const result = await ChatService.markMessagesRead(
+        roomId,
+        userId,
+        req.user.role
+      )
+
 
       // Emit via socket
       const io = getIo()
@@ -334,39 +339,39 @@ const ChatController = {
  * GET /api/chat/admin/rooms/:roomId
  * Admin get chi tiết một room
  */
-getAdminChatRoom: async (req, res) => {
-  try {
-    const { roomId } = req.params
+  getAdminChatRoom: async (req, res) => {
+    try {
+      const { roomId } = req.params
 
-    // Check admin role
-    if (req.user.role !== 'ADMIN') {
-      return res.status(403).json({
+      // Check admin role
+      if (req.user.role !== 'ADMIN') {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden - Admin only'
+        })
+      }
+
+      if (!roomId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Room ID is required'
+        })
+      }
+
+      const room = await ChatService.getAdminChatRoom(roomId)
+
+      res.json({
+        success: true,
+        data: room
+      })
+    } catch (err) {
+      console.error('getAdminChatRoom error:', err)
+      res.status(500).json({
         success: false,
-        message: 'Forbidden - Admin only'
+        message: err.message
       })
     }
-
-    if (!roomId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Room ID is required'
-      })
-    }
-
-    const room = await ChatService.getAdminChatRoom(roomId)
-
-    res.json({
-      success: true,
-      data: room
-    })
-  } catch (err) {
-    console.error('getAdminChatRoom error:', err)
-    res.status(500).json({
-      success: false,
-      message: err.message
-    })
-  }
-},
+  },
 
 
 }

@@ -44,10 +44,10 @@ export default function SupportManager() {
     // New message event
     socketRef.current.on('message:new', (data) => {
       const { data: message } = data
-      
+
       // Reload rooms untuk update sidebar
       loadRooms()
-      
+
       // Add message nếu active room match
       if (message.roomId === activeRoomRef.current?.id) {
         setMessages(prev => [...prev, message])
@@ -96,8 +96,8 @@ export default function SupportManager() {
   }, [])
 
   useEffect(() => {
-  activeRoomRef.current = activeRoom
-}, [activeRoom])
+    activeRoomRef.current = activeRoom
+  }, [activeRoom])
 
   // ============= AUTO SCROLL TO BOTTOM =============
 
@@ -123,7 +123,7 @@ export default function SupportManager() {
     setLoading(true)
     try {
       setAccessToken(localStorage.getItem('accessToken'))
-      
+
       // Emit socket event to join room
       if (socketRef.current?.emit) {
         socketRef.current.emit('chat:join', { roomId: room.id })
@@ -193,7 +193,7 @@ export default function SupportManager() {
   const formatTime = (date) => {
     const d = new Date(date)
     const today = new Date()
-    
+
     if (d.toDateString() === today.toDateString()) {
       return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
     }
@@ -213,209 +213,184 @@ export default function SupportManager() {
   // ============= RENDER =============
 
   return (
-    <div className="h-[80vh] rounded-xl overflow-hidden bg-white shadow-lg flex">
-      {/* ============= LEFT: ROOMS LIST ============= */}
+    <div className="min-h-screen bg-slate-50 py-8">
+      <div className="max-w-7xl mx-auto px-4">
+        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-8">
+          Chat hỗ trợ khách hàng
+        </h1>
 
-      <div className="w-96 border-r border-gray-200 flex flex-col bg-gray-50">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200 bg-white">
-          <div className="flex items-center gap-2 mb-2">
-            <MessageSquare className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Hộp tin nhắn</h2>
-          </div>
-          <p className="text-sm text-gray-500">
-            {rooms.length} cuộc trò chuyện
-          </p>
-        </div>
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-[700px] flex">
 
-        {/* Search */}
-        <div className="p-3 border-b border-gray-200 bg-white">
-          <input
-            type="text"
-            placeholder="Tìm kiếm khách hàng..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
+          {/* ================= LEFT: ROOMS ================= */}
+          <div className="w-80 border-r border-slate-200 flex flex-col">
 
-        {/* Rooms */}
-        <div className="flex-1 overflow-y-auto">
-          {filteredRooms.length === 0 ? (
-            <div className="p-8 text-center text-gray-400">
-              <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Không có cuộc trò chuyện</p>
-            </div>
-          ) : (
-            filteredRooms.map(room => {
-              const lastMsg = room.messages?.[0]
-              const isActive = activeRoom?.id === room.id
-
-              return (
-                <button
-                  key={room.id}
-                  onClick={() => openRoom(room)}
-                  className={`w-full flex items-start gap-3 p-3 hover:bg-gray-100 transition-colors text-left border-b border-gray-100 ${
-                    isActive ? 'bg-blue-50' : ''
-                  }`}
-                >
-                  {/* Avatar */}
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                    {getInitials(room.user.name)}
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-medium text-gray-900 truncate">
-                        {room.user.name}
-                      </div>
-                      {lastMsg && (
-                        <div className="text-xs text-gray-400 whitespace-nowrap">
-                          {formatTime(lastMsg.createdAt)}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 mt-1">
-                      <div className="text-sm text-gray-500 truncate">
-                        {lastMsg ? formatShort(lastMsg.content) : 'Chưa có tin nhắn'}
-                      </div>
-
-                      {/* Unread badge */}
-                      {room.unreadCount > 0 && (
-                        <div className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs font-semibold rounded-full flex-shrink-0">
-                          {room.unreadCount}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="text-xs text-gray-400 mt-1">
-                      {room.user.email}
-                    </div>
-                  </div>
-                </button>
-              )
-            })
-          )}
-        </div>
-      </div>
-
-      {/* ============= RIGHT: CHAT AREA ============= */}
-
-      <div className="flex-1 flex flex-col bg-white">
-        {!activeRoom ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-            <MessageSquare className="w-12 h-12 mb-4 opacity-30" />
-            <p>Chọn một cuộc trò chuyện để bắt đầu</p>
-          </div>
-        ) : (
-          <>
-            {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200 bg-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => {
-                    setActiveRoom(null)
-                    activeRoomRef.current = null
-                    setMessages([])
-                  }}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-
-                <div>
-                  <h3 className="font-semibold text-gray-900">
-                    {activeRoom.user.name}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {userTyping ? (
-                      <span className="text-blue-600">Đang nhập...</span>
-                    ) : (
-                      activeRoom.user.email
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              <div className="text-sm text-gray-400">
-                {activeRoom.createdAt &&
-                  new Date(activeRoom.createdAt).toLocaleString('vi-VN')}
-              </div>
+            {/* Search */}
+            <div className="p-4 border-b border-slate-200">
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm kiếm khách hàng..."
+                className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
-              {loading ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-gray-400">
-                  <p>Bắt đầu cuộc trò chuyện</p>
+            {/* Room list */}
+            <div className="flex-1 overflow-y-auto">
+              {filteredRooms.length === 0 ? (
+                <div className="p-8 text-center text-slate-500">
+                  <Users className="w-10 h-10 mx-auto mb-3 text-slate-300" />
+                  <p className="text-sm">Chưa có cuộc hội thoại</p>
                 </div>
               ) : (
-                messages.map(msg => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${
-                      msg.senderRole === 'ADMIN' ? 'justify-end' : 'justify-start'
-                    }`}
-                  >
-                    <div
-                      className={`max-w-xs px-4 py-2 rounded-2xl ${
-                        msg.senderRole === 'ADMIN'
-                          ? 'bg-blue-600 text-white rounded-br-none'
-                          : 'bg-white text-gray-900 border border-gray-200 rounded-bl-none'
-                      }`}
-                    >
-                      <p className="text-sm break-words">{msg.content}</p>
-                      <p
-                        className={`text-xs mt-1 text-right ${
-                          msg.senderRole === 'ADMIN'
-                            ? 'text-blue-100'
-                            : 'text-gray-400'
+                filteredRooms.map(room => {
+                  const lastMsg = room.messages?.[0]
+                  const isActive = activeRoom?.id === room.id
+
+                  return (
+                    <button
+                      key={room.id}
+                      onClick={() => openRoom(room)}
+                      className={`w-full text-left p-3 border-b hover:bg-slate-50 transition-colors ${isActive ? 'bg-blue-50 border-blue-200' : ''
                         }`}
-                      >
-                        {formatTime(msg.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                ))
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Avatar */}
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                          {getInitials(room.user.name)}
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="font-semibold text-sm text-slate-900 truncate">
+                              {room.user.name}
+                            </p>
+                            {lastMsg && (
+                              <span className="text-xs text-slate-400">
+                                {formatTime(lastMsg.createdAt)}
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-xs text-slate-500 truncate">
+                            {lastMsg ? formatShort(lastMsg.content) : 'Chưa có tin nhắn'}
+                          </p>
+                        </div>
+
+                        {/* Unread */}
+                        {room.unreadCount > 0 && (
+                          <span className="ml-2 bg-blue-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                            {room.unreadCount}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })
               )}
-
-              <div ref={messagesEndRef} />
             </div>
+          </div>
 
-            {/* Message Input */}
-            <div className="p-4 border-t border-gray-200 bg-white">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      sendMessage()
-                    }
-                  }}
-                  placeholder="Nhập tin nhắn..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={!content.trim()}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Send className="w-5 h-5" />
-                </button>
+          {/* ================= RIGHT: CHAT ================= */}
+          <div className="flex-1 flex flex-col">
+            {!activeRoom ? (
+              <div className="flex-1 flex items-center justify-center text-slate-500">
+                <div className="text-center">
+                  <MessageSquare className="w-14 h-14 mx-auto mb-4 text-slate-300" />
+                  <p>Chọn một cuộc hội thoại để bắt đầu</p>
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            ) : (
+              <>
+                {/* Header */}
+                <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-slate-900">
+                      {activeRoom.user.name}
+                    </h3>
+                    <p className="text-sm text-slate-500">
+                      {userTyping ? (
+                        <span className="text-blue-600">Đang nhập...</span>
+                      ) : (
+                        activeRoom.user.email
+                      )}
+                    </p>
+                  </div>
+                  <span className="text-xs text-slate-400">
+                    {activeRoom.createdAt &&
+                      new Date(activeRoom.createdAt).toLocaleString('vi-VN')}
+                  </span>
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50">
+                  {loading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="text-center text-slate-400">
+                      Bắt đầu cuộc trò chuyện
+                    </div>
+                  ) : (
+                    messages.map(msg => {
+                      const isAdmin = msg.senderRole === 'ADMIN'
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[70%] px-4 py-2 rounded-2xl ${isAdmin
+                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white'
+                              : 'bg-white border text-slate-900'
+                              }`}
+                          >
+                            <p className="text-sm break-words">{msg.content}</p>
+                            <p
+                              className={`text-xs mt-1 text-right ${isAdmin ? 'text-blue-100' : 'text-slate-400'
+                                }`}
+                            >
+                              {formatTime(msg.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input */}
+                <div className="p-4 border-t border-slate-200">
+                  <div className="flex gap-2">
+                    <input
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault()
+                          sendMessage()
+                        }
+                      }}
+                      placeholder="Nhập tin nhắn..."
+                      className="flex-1 px-4 py-2 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      onClick={sendMessage}
+                      disabled={!content.trim()}
+                      className="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full disabled:opacity-50"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
+
 }
