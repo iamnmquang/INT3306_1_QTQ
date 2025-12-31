@@ -1,6 +1,9 @@
 const prisma = require('../../utils/prisma')
 
+const LOCK_TTL = 5 * 60 * 1000;
+
 const FlightSeatService = {
+
   getAll: async () => {
     return await prisma.flightSeat.findMany({
       include: { flight: true },
@@ -10,7 +13,7 @@ const FlightSeatService = {
   getById: async (id) => {
     return await prisma.flightSeat.findUnique({
       where: { id },
-      include: { flight: true},
+      include: { flight: true },
     });
   },
 
@@ -31,6 +34,8 @@ const FlightSeatService = {
 
   //get all seat available for booking
   getAvailableSeatsByClass: async (flightSeatId) => {
+    await FlightSeatService.unlockExpiredSeats();
+
     return await prisma.seatDetail.findMany({
       where: {
         flightSeatId,
@@ -42,35 +47,66 @@ const FlightSeatService = {
       }
     });
   },
-
-  //lock a seat (select for booking)
   lockSeats: async (userId, seatDetailIds) => {
     const now = new Date();
 
-    await prisma.seatDetail.updateMany({
-      where: {
-        id: {
-          in: seatDetailIds
+    return await prisma.$transaction(async (tx) => {
+      //cleanup lock hết hạn
+      await tx.seatDetail.updateMany({
+        where: {
+          isLocked: true,
+          lockedAt: {
+            lt: new Date(Date.now() - LOCK_TTL),
+          },
         },
-        isBooked: false,
-        isLocked: false,
-      },
-      data: {
-        isLocked: true,
-        isLockedByUserId: userId,
-        lockedAt: now,
-      }
-    })
+        data: {
+          isLocked: false,
+          isLockedByUserId: null,
+          lockedAt: null,
+        },
+      });
 
-    return prisma.seatDetail.findMany({
-      where: {
-        id: {
-          in: seatDetailIds
+      //lấy ghế cần lock
+      const seats = await tx.seatDetail.findMany({
+        where: {
+          id: { in: seatDetailIds },
+        },
+      });
+
+      if (seats.length !== seatDetailIds.length) {
+        throw new Error("Some seats not found");
+      }
+
+      //validate từng ghế
+      for (const seat of seats) {
+        if (seat.isBooked) {
+          throw new Error(`Seat ${seat.id} already booked`);
+        }
+        if (seat.isLocked && seat.isLockedByUserId !== userId) {
+          throw new Error(`Seat ${seat.id} is locked by another user`);
         }
       }
-    })
 
+      //  lock ghế
+      await tx.seatDetail.updateMany({
+        where: {
+          id: { in: seatDetailIds },
+        },
+        data: {
+          isLocked: true,
+          isLockedByUserId: userId,
+          lockedAt: now,
+        },
+      });
+
+      return tx.seatDetail.findMany({
+        where: {
+          id: { in: seatDetailIds },
+        },
+      });
+    });
   },
+
 
   //unlock seats (when user change, expired, trasaction rollback)
   unlockSeats: async (seatDetailIds, userId) => {
@@ -86,6 +122,22 @@ const FlightSeatService = {
         isLockedByUserId: null,
         lockedAt: null,
       }
+    });
+  },
+
+  unlockExpiredSeats : async () => {
+    await prisma.seatDetail.updateMany({
+      where: {
+        isLocked: true,
+        lockedAt: {
+          lt: new Date(Date.now() - LOCK_TTL),
+        },
+      },
+      data: {
+        isLocked: false,
+        isLockedByUserId: null,
+        lockedAt: null,
+      },
     });
   },
 
