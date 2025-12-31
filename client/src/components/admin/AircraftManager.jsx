@@ -30,7 +30,7 @@ export default function AircraftManager() {
     e && e.preventDefault();
 
     if (!form.code || !form.manufacturer)
-      return toast.error('Mã và hãng là bắt buộc');
+      return alert('Mã và hãng là bắt buộc');
 
     const payload = {
       name: form.code,          // ⭐ QUAN TRỌNG
@@ -50,7 +50,7 @@ export default function AircraftManager() {
       load();
     } catch (err) {
       console.error(err);
-      toast.error('Lỗi lưu máy bay');
+      alert('Lỗi lưu máy bay');
     }
   };
 
@@ -59,7 +59,7 @@ export default function AircraftManager() {
   const updateSeat = (idx, key, value) => setForm(prev => ({ ...prev, seats: prev.seats.map((s, i) => i === idx ? ({ ...s, [key]: value }) : s) }));
   const removeSeat = (idx) => setForm(prev => ({ ...prev, seats: prev.seats.filter((_, i) => i !== idx) }));
 
-  const remove = async (id) => { if (!confirm('Xác nhận xóa?')) return; try { await aircraftApi.delete(id); load(); } catch (err) { console.error(err); toast.error('Lỗi xóa'); } };
+  const remove = async (id) => { if (!confirm('Xác nhận xóa?')) return; try { await aircraftApi.delete(id); load(); } catch (err) { console.error(err); alert('Lỗi xóa'); } };
 
   return (
     <div className="min-h-screen bg-slate-50 py-8">
