@@ -122,13 +122,21 @@ export default function Book() {
     setLoading(true);
     try {
       const res = await ticketApi.confirmBookings(bookingData);
+       const tickets = res.data || res.tickets || [];
+    
+    if (tickets.length === 0) {
+      throw new Error('Không tạo được vé');
+    }
+
       alert(res.message || 'Booking successful');
       // unlock our locked seats reference so cleanup won't try to unlock again
       setLockedSeats([]);
       // send e-ticket email (fire-and-forget)
       const bookingRef = res.tickets?.[0]?.bookingReference || '';
       if (bookingRef) {
-        ticketApi.sendETicket(bookingRef).catch(() => { });
+        ticketApi.sendETicket(bookingRef).catch((err) => {
+        console.error('Failed to send e-ticket:', err);
+      });
       }
       // navigate to booking success page showing booking ref
       navigate(`/booking-success?ref=${bookingRef}`);

@@ -15,6 +15,8 @@ import BookingSuccess from './pages/BookingSuccess';
 import MyFlights from './pages/MyFlights';
 import SupportChat from './pages/SupportChat';
 import BookingSearch from './pages/BookingSearch';
+import News from './pages/News';
+import NewsDetail from './pages/NewsDetail';
 
 // Admin
 import Admin from './pages/Admin';
@@ -39,8 +41,10 @@ function App() {
           <Route path="/select-flight" element={<SelectFlight />} />
           <Route path="/book" element={<Book />} />
           <Route path="/booking-success" element={<BookingSuccess />} />
-          <Route path="/my-flights" element={<MyFlights />} />
+          <Route path="/my-flights" element={<ProtectedRoute><MyFlights /></ProtectedRoute>} />
           <Route path="/support-chat" element={<ProtectedRoute><SupportChat /></ProtectedRoute>} />
+          <Route path="/news" element={<News />} />
+          <Route path="/news/:id" element={<NewsDetail />} />
           <Route path="/booking-search" element={<BookingSearch />} />
 
           {/* Admin */}

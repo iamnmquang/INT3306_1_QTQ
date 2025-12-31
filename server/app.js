@@ -10,13 +10,14 @@ const ticketRouter = require('./api/ticket/ticket.route');
 const aircraftRouter = require('./api/aircraft/aircraft.route');
 const airportRouter = require('./api/airport/airport.route');
 const newsRouter = require('./api/news/new.route');
-const supportChatRouter = require('./api/chat/chat.route');
+const chatRouter = require('./api/chat/chat.route');
+
 
 const cookieParser = require('cookie-parser');
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true, //allow cookies to be sent
 }))
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -31,7 +32,8 @@ app.use('/ticket', ticketRouter);
 app.use('/aircraft', aircraftRouter);
 app.use('/airport', airportRouter);
 app.use('/news', newsRouter);
-app.use('/support-chat', supportChatRouter);
+app.use('/support-chat', chatRouter);
+
 app.use("/uploads", express.static("uploads"));
 
 

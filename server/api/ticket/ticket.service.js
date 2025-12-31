@@ -69,17 +69,22 @@ const TicketService = {
     });
   },
 
-  getTicketsByUserId: async (userId) => {
-    return await prisma.ticket.findMany({
-      where: { bookedById: userId },
-      include: {
-        flight: true,
-        flightSeat: true,
-        seatDetail: true,
-        passenger: true,
+ getTicketsByUserId: async (userId) => {
+  return await prisma.ticket.findMany({
+    where: { bookedById: userId },
+    include: {
+      flight: {
+        include: {
+          departureAirport: true,
+          arrivalAirport: true,
+        },
       },
-    });
-  },
+      flightSeat: true,
+      seatDetail: true,
+      passenger: true,
+    },
+  });
+},
 
   create: async (data) => {
     return await prisma.ticket.create({
@@ -149,7 +154,7 @@ const TicketService = {
         where: { ticketNumber: ticketNumber },
         data: {
           isCancelled: true,
-          cancelCode: cancelCode ,
+          cancelCode: cancelCode,
         },
         include: {
           passenger: true,
@@ -219,7 +224,7 @@ const TicketService = {
           throw new Error(`Seat ${seatDetailId} is not locked by this user or lock expired`);
         }
 
-        const flight = await tx.flight.findUnique({where: {id: flightId}})
+        const flight = await tx.flight.findUnique({ where: { id: flightId } })
 
         // Support using existing passengerId if provided, otherwise create a passenger
         let passengerIdToUse;
@@ -270,7 +275,7 @@ const TicketService = {
     });
   },
 
-  
+
 
 
   generateETicketPDF: async (ticket, passenger, flight) => {

@@ -1,4 +1,5 @@
 const FlightService = require('./flight.service');
+const ChatService = require('../chat/chat.service')
 
 
 const FlightController = {
