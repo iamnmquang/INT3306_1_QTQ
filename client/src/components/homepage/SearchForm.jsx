@@ -75,8 +75,19 @@ export default function SearchForm() {
     setToSuggestions([]);
   };
 
+  const isValid =
+  fromIata &&
+  toIata &&
+  fromIata !== toIata &&
+  depart &&
+  passengers > 0;
+
+
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (!isValid) return;
+
     const from = fromCity || fromIata || fromText;
     const to = toCity || toIata || toText;
     const q = new URLSearchParams({ from, to, date: depart, passengers }).toString();
@@ -185,6 +196,7 @@ export default function SearchForm() {
       <div className="flex items-end">
         <button
           type="submit"
+          disabled={!isValid}
           className="w-full h-[42px] bg-blue-600 text-white
                    rounded-md font-semibold
                    hover:bg-blue-700 transition"

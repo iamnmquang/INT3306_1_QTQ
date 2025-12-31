@@ -266,6 +266,42 @@ for (let i = 0; i < flights.length; i++) {
 
   console.log(`✔ Seeded ${totalSeatsInserted} seat details.`);
 
+   await prisma.news.createMany({
+    data: [
+      {
+        title: "Ra mắt hệ thống đặt vé máy bay trực tuyến",
+        content:
+          "Hệ thống đặt vé máy bay trực tuyến chính thức ra mắt, giúp người dùng tìm kiếm và đặt vé nhanh chóng, tiện lợi.",
+        thumbnailUrl:
+          "https://example.com/images/news1.jpg",
+        isPublished: true,
+      },
+      {
+        title: "Khuyến mãi mùa hè 2025",
+        content:
+          "Giảm giá lên đến 30% cho các chuyến bay nội địa trong mùa hè 2025.",
+        thumbnailUrl:
+          "https://example.com/images/news2.jpg",
+        isPublished: true,
+      },
+      {
+        title: "Thông báo bảo trì hệ thống",
+        content:
+          "Hệ thống sẽ được bảo trì từ 00:00 đến 04:00 ngày 15/01/2025.",
+        thumbnailUrl: null,
+        isPublished: false,
+      },
+      {
+        title: "Mở thêm đường bay mới",
+        content:
+          "Chúng tôi sắp mở thêm các đường bay mới kết nối các thành phố lớn.",
+        thumbnailUrl:
+          "https://example.com/images/news3.jpg",
+        isPublished: false,
+      },
+    ],
+  });
+
 
   console.log("🌱 Seeding completed successfully!");
 }

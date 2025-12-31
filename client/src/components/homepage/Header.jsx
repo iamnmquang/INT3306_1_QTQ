@@ -40,7 +40,7 @@ export default function Header() {
             {[
               { label: "Trang chủ", path: "/home", onClick: handleHomeClick },
               { label: "Lịch bay", path: "/my-flights", onClick: () => navigate("/my-flights") },
-              { label: "Khuyến mãi", path: "/promotions", onClick: () => navigate("/promotions") },
+              { label: "Bài viết", path: "/news", onClick: () => navigate("/news") },
               { label: "Hỗ trợ", path: "/support-chat", onClick: () => navigate("/support-chat") },
             ].map((item) => {
               const isActive = location.pathname === item.path

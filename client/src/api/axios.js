@@ -9,7 +9,15 @@ const api = axios.create({
 
 // Lưu access token trong memory
 let accessToken = null;
-export const setAccessToken = (token) => (accessToken = token);
+export const setAccessToken = (token) => {
+  accessToken = token;
+  try {
+    if (token) localStorage.setItem('accessToken', token);
+    else localStorage.removeItem('accessToken');
+  } catch (err) {
+    // ignore
+  }
+};
 
 // Tự động thêm header Bearer
 api.interceptors.request.use((config) => {

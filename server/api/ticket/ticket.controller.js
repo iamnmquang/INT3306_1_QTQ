@@ -219,6 +219,7 @@ const TicketController = {
       res.status(201).json({
         message: `${tickets.length} tickets created successfully`,
         tickets,
+        data: tickets,
       });
     } catch (err) {
       res.status(400).json({ message: 'Error confirming bookings', error: err.message });

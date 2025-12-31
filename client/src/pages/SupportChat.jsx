@@ -1,299 +1,256 @@
-import React, { useEffect, useRef, useState } from "react"
-import io from "socket.io-client"
-import axios from "../api/axios"
+import React, { useEffect, useRef, useState } from 'react'
+import { supportChatApi } from '../api/supportChatApi'
+import { setAccessToken } from '../api/axios'
+import io from 'socket.io-client'
+import { Send, MessageCircle } from 'lucide-react'
 
-
-const SOCKET_URL =
-    import.meta.env.VITE_SOCKET_URL || "http://localhost:4000"
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000'
 
 export default function SupportChat() {
-    /* ================= STATE ================= */
-    const [user] = useState(() =>
-        JSON.parse(localStorage.getItem("user"))
-    )
-    const [room, setRoom] = useState(null)
-    const [messages, setMessages] = useState([])
-    const [message, setMessage] = useState("")
-    const [typing, setTyping] = useState(false)
-    const [isAdminTyping, setIsAdminTyping] = useState(false)
-    const socketRef = useRef(null)
-    const messagesEndRef = useRef(null)
-    const typingTimeoutRef = useRef(null)
+  const socketRef = useRef(null)
+  const [room, setRoom] = useState(null)
+  const [messages, setMessages] = useState([])
+  const [content, setContent] = useState('')
+  const [adminTyping, setAdminTyping] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const messagesEndRef = useRef(null)
 
-    /* ================= AUTO SCROLL ================= */
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({
-            behavior: "smooth"
+  // ============= INITIALIZE =============
+
+  useEffect(() => {
+    setAccessToken(localStorage.getItem('accessToken'))
+    loadRoom()
+
+    // Initialize socket
+    socketRef.current = io(SOCKET_URL, {
+      auth: {
+        token: localStorage.getItem('accessToken'),
+        role: 'USER'
+      }
+    })
+
+    socketRef.current.on('connect', () => {
+      console.log('[Socket] User connected')
+      socketRef.current.emit('user:join', {
+        userId: localStorage.getItem('userId'),
+        role: 'USER'
+      })
+    })
+
+    // Admin sent message
+    socketRef.current.on('message:new', (data) => {
+      const { data: message } = data
+      setMessages(prev => [...prev, message])
+    })
+
+    // Admin is typing
+    socketRef.current.on('user:typing', ({ isTyping }) => {
+      setAdminTyping(isTyping)
+    })
+
+    // Message deleted
+    socketRef.current.on('message:deleted', ({ messageId }) => {
+      setMessages(prev => prev.filter(m => m.id !== messageId))
+    })
+
+    // Message edited
+    socketRef.current.on('message:edited', ({ data: editedMsg }) => {
+      setMessages(prev =>
+        prev.map(m => m.id === editedMsg.id ? editedMsg : m)
+      )
+    })
+
+    socketRef.current.on('connect_error', (err) => {
+      console.error('[Socket] Connection error:', err)
+    })
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect()
+      }
+    }
+  }, [])
+
+  // ============= AUTO SCROLL =============
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  // ============= LOAD ROOM =============
+
+  const loadRoom = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      setAccessToken(localStorage.getItem('accessToken'))
+
+      const roomData = await supportChatApi.getMyRoom()
+      setRoom(roomData)
+
+      // Fetch messages
+      const msgs = await supportChatApi.getMessages(roomData.id)
+      setMessages(msgs)
+
+      // Mark as read
+      await supportChatApi.markRead(roomData.id)
+
+      // Join room via socket
+      if (socketRef.current?.emit) {
+        socketRef.current.emit('chat:join', { roomId: roomData.id })
+      }
+    } catch (err) {
+      console.error('[Error] Load room:', err)
+      setError('Không thể tải cuộc trò chuyện. Vui lòng thử lại.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // ============= SEND MESSAGE =============
+
+  const sendMessage = async () => {
+    if (!content.trim() || !room) return
+
+    const messageContent = content
+    setContent('')
+
+    try {
+      setAccessToken(localStorage.getItem('accessToken'))
+
+      // Send via API
+      const message = await supportChatApi.sendMessage(room.id, messageContent)
+
+      // Broadcast via socket
+      if (socketRef.current?.emit) {
+        socketRef.current.emit('message:new', {
+          roomId: room.id,
+          message
         })
-    }, [messages])
+      }
 
-    /* ================= INIT ================= */
-    useEffect(() => {
-        if (!user) return
-
-        const init = async () => {
-            // 1️⃣ Lấy room của user
-            const res = await axios.get("/support-chat/my-room")
-            setRoom(res.data)
-
-            // 2️⃣ Lấy message cũ
-            const msgRes = await axios.get(
-                `/support-chat/messages/${res.data.id}`
-            )
-            setMessages(msgRes.data)
-
-            // 3️⃣ Kết nối socket
-            socketRef.current = io(SOCKET_URL, {
-                auth: {
-                    token: localStorage.getItem("accessToken")
-                }
-            })
-
-            // 4️⃣ Join room
-            socketRef.current.emit("join-room", {
-                roomId: res.data.id
-            })
-
-            /* ===== SOCKET LISTENERS ===== */
-
-            socketRef.current.on("new-message", (msg) => {
-                setMessages((prev) => [...prev, msg])
-            })
-
-            socketRef.current.on("typing", ({ isTyping }) => {
-                setIsAdminTyping(isTyping)
-            })
-
-            socketRef.current.on("send-message-error", (err) => {
-                console.error("Send error:", err.message)
-            })
-        }
-
-        init()
-
-        return () => {
-            socketRef.current?.disconnect()
-        }
-    }, [user])
-
-    /* ================= SEND MESSAGE ================= */
-    const sendMessage = () => {
-        if (!message.trim()) return
-
-        socketRef.current.emit("send-message", {
-            roomId: room?.id,
-            content: message
-        })
-
-        setMessage("")
-        stopTyping()
+      setMessages(prev => [...prev, message])
+    } catch (err) {
+      console.error('[Error] Send message:', err)
+      setContent(messageContent) // Restore on error
+      setError('Gửi tin nhắn thất bại')
     }
+  }
 
-    /* ================= TYPING ================= */
-    const handleTyping = (e) => {
-        setMessage(e.target.value)
+  // ============= FORMAT HELPERS =============
 
-        if (!typing) {
-            setTyping(true)
-            socketRef.current.emit("typing", {
-                roomId: room.id,
-                isTyping: true
-            })
-        }
+  const formatTime = (date) => {
+    const d = new Date(date)
+    const today = new Date()
 
-        clearTimeout(typingTimeoutRef.current)
-        typingTimeoutRef.current = setTimeout(stopTyping, 800)
+    if (d.toDateString() === today.toDateString()) {
+      return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
     }
+    return d.toLocaleDateString('vi-VN')
+  }
 
-    const stopTyping = () => {
-        if (typing) {
-            setTyping(false)
-            socketRef.current.emit("typing", {
-                roomId: room.id,
-                isTyping: false
-            })
-        }
-    }
+  // ============= RENDER =============
 
-    const formatMessageTime = (date) => {
-        const d = new Date(date)
-        const now = new Date()
-
-        const isToday =
-            d.getDate() === now.getDate() &&
-            d.getMonth() === now.getMonth() &&
-            d.getFullYear() === now.getFullYear()
-
-        if (isToday) {
-            return d.toLocaleTimeString("vi-VN", {
-                hour: "2-digit",
-                minute: "2-digit"
-            })
-        }
-
-        return d.toLocaleString("vi-VN", {
-            hour: "2-digit",
-            minute: "2-digit",
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric"
-        })
-    }
-
-
-    /* ================= UI ================= */
-    return (
-        <div className="min-h-screen bg-slate-50 py-8">
-            <div className="max-w-6xl mx-auto px-4">
-                <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-8">
-                    Hỗ trợ khách hàng
-                </h1>
-
-                <div className="grid lg:grid-cols-3 gap-6">
-
-                    {/* ===== CONTACT INFO ===== */}
-                    <div className="space-y-6">
-                        <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                            <h2 className="font-bold text-slate-900 mb-4">Liên hệ trực tiếp</h2>
-
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                                        📞
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-slate-500">Hotline</p>
-                                        <p className="font-semibold text-slate-900">0948004156</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-                                        ✉️
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-slate-500">Email</p>
-                                        <p className="font-semibold text-slate-900">
-                                            23020136@vnu.edu.vn
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                                        ⏰
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-slate-500">Giờ làm việc</p>
-                                        <p className="font-semibold text-slate-900">24/7</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-6 text-white">
-                            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4">
-                                🎧
-                            </div>
-                            <h3 className="font-bold text-lg mb-2">Cần hỗ trợ gấp?</h3>
-                            <p className="text-blue-100 text-sm mb-4">
-                                Đội ngũ tư vấn viên của chúng tôi luôn sẵn sàng hỗ trợ bạn 24/7
-                            </p>
-                            <button
-                                className="w-full bg-white text-blue-600 font-semibold py-2 rounded-xl hover:bg-blue-50 transition"
-                            >
-                                📞 Gọi ngay: 0948004156
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* ===== CHAT WINDOW ===== */}
-                    <div className="lg:col-span-2">
-                        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-[600px] flex flex-col">
-
-                            {/* Header */}
-                            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                                        💬
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-white">Chat với Admin</h3>
-                                        <p className="text-blue-100 text-sm">
-                                            {isAdminTyping ? "Admin đang nhập..." : "Hỗ trợ trực tuyến"}
-                                        </p>
-                                    </div>
-                                </div>
-                                <span className="w-2 h-2 bg-green-300 rounded-full animate-pulse" />
-                            </div>
-
-                            {/* Messages */}
-                            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-slate-50">
-                                {messages.map((m) => {
-                                    const isUser = m.senderRole === "USER"
-                                    return (
-                                        <div
-                                            key={m.id}
-                                            className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-                                        >
-                                            <div className={`flex items-end gap-2 max-w-[75%] ${isUser ? "flex-row-reverse" : ""}`}>
-                                                <div
-                                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold
-                        ${isUser ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-600"}`}
-                                                >
-                                                    {isUser ? "U" : "A"}
-                                                </div>
-
-                                                <div>
-                                                    <div
-                                                        className={`px-4 py-2.5 rounded-2xl text-sm
-                          ${isUser
-                                                                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-                                                                : "bg-white border text-slate-800"}`}
-                                                    >
-                                                        {m.content}
-                                                    </div>
-                                                    <p className={`text-xs text-slate-400 mt-1 ${isUser ? "text-right" : ""}`}>
-                                                        {formatMessageTime(m.createdAt)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-
-                                <div ref={messagesEndRef} />
-                            </div>
-
-                            {/* Input */}
-                            <div className="border-t border-slate-200 px-4 py-4 bg-white">
-                                <div className="flex items-end gap-3">
-                                    <input
-                                        value={message}
-                                        onChange={handleTyping}
-                                        onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                                        placeholder="Nhập tin nhắn..."
-                                        className="flex-1 px-4 py-2.5 border rounded-full focus:ring-2 focus:ring-blue-500"
-                                    />
-                                    <button
-                                        onClick={sendMessage}
-                                        className="h-11 w-11 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-                                    >
-                                        ➤
-                                    </button>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                </div>
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="rounded-lg overflow-hidden bg-white shadow-lg flex flex-col h-[600px]">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="w-5 h-5" />
+            <div>
+              <h2 className="font-semibold">Hỗ trợ khách hàng</h2>
+              <p className="text-sm text-blue-100">
+                {adminTyping ? 'Đội hỗ trợ đang nhập...' : 'Nhắn tin trực tiếp với đội hỗ trợ'}
+              </p>
             </div>
+          </div>
         </div>
-    )
 
+        {/* Error */}
+        {error && (
+          <div className="p-3 bg-red-50 border-b border-red-200 text-red-700 text-sm">
+            {error}
+          </div>
+        )}
 
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-gray-400">
+              <div className="text-center">
+                <MessageCircle className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                <p>Bắt đầu cuộc trò chuyện</p>
+              </div>
+            </div>
+          ) : (
+            messages.map(msg => (
+              <div
+                key={msg.id}
+                className={`flex ${
+                  msg.senderRole === 'USER' ? 'justify-end' : 'justify-start'
+                }`}
+              >
+                <div
+                  className={`max-w-xs px-4 py-2 rounded-2xl ${
+                    msg.senderRole === 'USER'
+                      ? 'bg-blue-600 text-white rounded-br-none'
+                      : 'bg-white text-gray-900 border border-gray-200 rounded-bl-none'
+                  }`}
+                >
+                  <p className="text-sm font-medium mb-1">
+                    {msg.sender.name}
+                  </p>
+                  <p className="text-sm break-words">{msg.content}</p>
+                  <p
+                    className={`text-xs mt-1 text-right ${
+                      msg.senderRole === 'USER'
+                        ? 'text-blue-100'
+                        : 'text-gray-400'
+                    }`}
+                  >
+                    {formatTime(msg.createdAt)}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
 
+          <div ref={messagesEndRef} />
+        </div>
 
-
+        {/* Input */}
+        <div className="p-4 border-t border-gray-200 bg-white">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  sendMessage()
+                }
+              }}
+              placeholder="Nhập tin nhắn..."
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              disabled={loading}
+            />
+            <button
+              onClick={sendMessage}
+              disabled={!content.trim() || loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Send className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }

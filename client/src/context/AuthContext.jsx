@@ -20,14 +20,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // ================= INIT SESSION =================
+ 
   useEffect(() => {
     let mounted = true;
 
     const init = async () => {
       setLoading(true);
       try {
-        // ✅ 1. Nếu đã có user → dùng luôn, KHÔNG gọi API
+        //  Nếu đã có user → dùng luôn, khong gọi API
         const rawUser = localStorage.getItem('user');
         if (rawUser) {
           const parsedUser = JSON.parse(rawUser);
@@ -35,7 +35,7 @@ export function AuthProvider({ children }) {
           return;
         }
 
-        // ✅ 2. Chỉ khi reload / chưa login mới gọi refresh + profile
+        //  Chỉ khi reload / chưa login mới gọi refresh + profile
         const refreshRes = await authApi.refreshToken();
         if (refreshRes?.accessToken) {
           setAccessToken(refreshRes.accessToken);
@@ -64,7 +64,7 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // ================= SYNC TAB / WINDOW =================
+
   useEffect(() => {
     const onLogin = () => {
       try {
@@ -95,7 +95,7 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // ================= INTERCEPTOR =================
+  
   useEffect(() => {
     const interceptor = api.interceptors.response.use(
       (res) => res,
@@ -115,7 +115,6 @@ export function AuthProvider({ children }) {
     return () => api.interceptors.response.eject(interceptor);
   }, [navigate]);
 
-  // ================= ACTIONS =================
   const login = useCallback(async (email, password) => {
     const data = await authApi.login(email, password);
     const accessToken = data.accessToken || data.token || null;

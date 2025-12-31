@@ -85,10 +85,13 @@ export default function MyFlights() {
       }
     };
 
+    
+    
     load();
     return () => (mounted = false);
   }, [user]);
 
+ 
 
 
   return (
@@ -201,13 +204,15 @@ export default function MyFlights() {
                             </div>
 
                             <div className="text-sm text-slate-600">
-                              {t.flight.departureAirport?.iataCode} →{' '}
-                              {t.flight.arrivalAirport?.iataCode}
+                              <div>
+                                {t.flight?.departureAirport?.iataCode || '—'} → {t.flight?.arrivalAirport?.iataCode || '—'}
+                              </div>
+                              <div className="text-xs text-gray-400 mt-1">{t.flight?.departureTime ? new Date(t.flight.departureTime).toLocaleString() : ''}</div>
                             </div>
 
                             <div className="mt-2 text-sm">
-                              👤 {t.passenger?.fullName || '—'} <br />
-                              💺 Ghế: {t.seatNumber}
+                              👤 {t.passenger?.fullName || t.passengerName || '—'} <br />
+                              💺 Ghế: {t.seatNumber || t.seatDetail?.seatNumber || '—'}
                             </div>
 
                             <div className="mt-4">
@@ -265,8 +270,7 @@ export default function MyFlights() {
                               ✈️ {t.flight.flightNumber}
                             </div>
                             <div className="text-sm">
-                              {t.flight.departureAirport?.iataCode} →{' '}
-                              {t.flight.arrivalAirport?.iataCode}
+                              {t.flight?.departureAirport?.iataCode || '—'} → {t.flight?.arrivalAirport?.iataCode || '—'}
                             </div>
                             <div className="text-xs mt-2">
                               Mã huỷ: {t.cancelCode || '--'}
