@@ -27,7 +27,11 @@ const FlightController = {
       const flight = await FlightService.create(req.body);
       res.status(201).json(flight);
     } catch (err) {
-      res.status(400).json({ message: 'Error creating flight', error: err.message });
+      console.error(err);
+      res.status(400).json({
+        message: err.message,
+        prisma: err
+      });
     }
   },
 
@@ -51,16 +55,16 @@ const FlightController = {
 
   searchFlights: async (req, res) => {
     try {
-      const {departureCity, arrivalCity, departureTime, passengerNum} = req.body;
+      const { departureCity, arrivalCity, departureTime, passengerNum } = req.body;
 
-       if (!departureCity || !arrivalCity || !departureTime || !passengerNum) {
+      if (!departureCity || !arrivalCity || !departureTime || !passengerNum) {
         return res.status(400).json({
           message: 'Missing required parameters: departureCity, arrivalCity, departureTime, passengerNum',
         });
       }
-      const flights = await FlightService.searchFlights(departureCity,arrivalCity,departureTime,passengerNum);
+      const flights = await FlightService.searchFlights(departureCity, arrivalCity, departureTime, passengerNum);
 
-        if (flights.length === 0) {
+      if (flights.length === 0) {
         return res.status(404).json({
           message: 'No flights found for the given criteria',
         });
@@ -72,23 +76,23 @@ const FlightController = {
   },
 
   getUnreadCount: async (req, res) => {
-  try {
-    const { roomId } = req.params
-    const count = await ChatService.getUnreadCountByRoom(roomId, req.user.id)
-    res.json({ unread: count })
-  } catch (err) {
-    res.status(500).json({ message: 'Error getting unread count' })
-  }
-}, 
+    try {
+      const { roomId } = req.params
+      const count = await ChatService.getUnreadCountByRoom(roomId, req.user.id)
+      res.json({ unread: count })
+    } catch (err) {
+      res.status(500).json({ message: 'Error getting unread count' })
+    }
+  },
 
-getUnreadForAdmin: async (req, res) => {
-  try {
-    const data = await ChatService.getUnreadCountsForAdmin()
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ message: 'Error getting unread counts' })
+  getUnreadForAdmin: async (req, res) => {
+    try {
+      const data = await ChatService.getUnreadCountsForAdmin()
+      res.json(data)
+    } catch (err) {
+      res.status(500).json({ message: 'Error getting unread counts' })
+    }
   }
-}
 
 
 };

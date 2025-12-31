@@ -76,11 +76,11 @@ export default function SearchForm() {
   };
 
   const isValid =
-  fromIata &&
-  toIata &&
-  fromIata !== toIata &&
-  depart &&
-  passengers > 0;
+    fromIata &&
+    toIata &&
+    fromIata !== toIata &&
+    depart &&
+    passengers > 0;
 
 
   const handleSubmit = (e) => {

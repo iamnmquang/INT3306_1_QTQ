@@ -35,7 +35,7 @@ const AircraftController = {
   // Cập nhật thông tin máy bay
   update: async (req, res) => {
     try {
-      const aircraft = await AircraftService.update(parseInt(req.params.id), req.body);
+      const aircraft = await AircraftService.update(req.params.id, req.body);
       res.json(aircraft);
     } catch (err) {
       res.status(400).json({ message: 'Error updating aircraft', error: err.message });
@@ -45,7 +45,7 @@ const AircraftController = {
   // Xóa máy bay
   delete: async (req, res) => {
     try {
-      await AircraftService.delete(parseInt(req.params.id));
+      await AircraftService.delete(req.params.id);
       res.status(204).end();
     } catch (err) {
       res.status(400).json({ message: 'Error deleting aircraft', error: err.message });

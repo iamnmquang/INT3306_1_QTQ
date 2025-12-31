@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { aircraftApi } from '../../api/aircraftApi';
+
 import Modal from '../common/Modal';
 
 export default function AircraftManager() {
@@ -25,16 +26,32 @@ export default function AircraftManager() {
 
   const submit = async (e) => {
     e && e.preventDefault();
-    if (!form.code || !form.manufacturer) return alert('Mã và hãng là bắt buộc');
+
+    if (!form.code || !form.manufacturer)
+      return alert('Mã và hãng là bắt buộc');
+
+    const payload = {
+      name: form.code,          // ⭐ QUAN TRỌNG
+      manufacturer: form.manufacturer,
+    };
+
     try {
-      if (editingId) await aircraftApi.update(editingId, form);
-      else await aircraftApi.create(form);
+      if (editingId) {
+        await aircraftApi.update(editingId, payload);
+      } else {
+        await aircraftApi.create(payload);
+      }
+
       setForm({ code: '', manufacturer: '', seats: [] });
       setEditingId(null);
       setShowModal(false);
       load();
-    } catch (err) { console.error(err); alert('Lỗi lưu máy bay'); }
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi lưu máy bay');
+    }
   };
+
 
   const addSeatRow = () => setForm(prev => ({ ...prev, seats: [...(prev.seats || []), { seatNumber: '', class: 'ECONOMY' }] }));
   const updateSeat = (idx, key, value) => setForm(prev => ({ ...prev, seats: prev.seats.map((s, i) => i === idx ? ({ ...s, [key]: value }) : s) }));

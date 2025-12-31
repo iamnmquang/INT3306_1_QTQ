@@ -25,8 +25,19 @@ const FlightService = {
   },
 
   create: async (data) => {
-    return prisma.flight.create({ data });
+    return prisma.flight.create({
+      data: {
+        flightNumber: data.flightNumber,
+        aircraftId: data.aircraftId, // UUID → OK
+        departureAirportId: Number(data.departureAirportId),
+        arrivalAirportId: Number(data.arrivalAirportId),
+        departureTime: new Date(data.departureTime),
+        arrivalTime: new Date(data.arrivalTime),
+        status: data.status || 'SCHEDULED',
+      },
+    });
   },
+
 
   update: async (id, data) => {
     return prisma.flight.update({
@@ -39,7 +50,7 @@ const FlightService = {
     return prisma.flight.delete({ where: { id } });
   },
 
-searchFlights: async (departureCity, arrivalCity, departureTime, passengerNum) => {
+  searchFlights: async (departureCity, arrivalCity, departureTime, passengerNum) => {
     const startOfDay = new Date(departureTime);
     startOfDay.setHours(0, 0, 0, 0);
 
@@ -65,7 +76,7 @@ searchFlights: async (departureCity, arrivalCity, departureTime, passengerNum) =
     const departureAirportIds = await buildAirportMatch(departureCity);
     const arrivalAirportIds = await buildAirportMatch(arrivalCity);
 
-     // Debug: Log airport IDs found
+    // Debug: Log airport IDs found
     console.log('Departure airport IDs:', departureAirportIds);
     console.log('Arrival airport IDs:', arrivalAirportIds);
 

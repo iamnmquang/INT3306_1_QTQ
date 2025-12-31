@@ -9,6 +9,17 @@ const api = axios.create({
 
 // Lưu access token trong memory
 let accessToken = null;
+
+// 🔥 restore token khi reload trang
+try {
+  const savedToken = localStorage.getItem('accessToken');
+  if (savedToken) {
+    accessToken = savedToken;
+  }
+} catch (err) {
+  // ignore
+}
+
 export const setAccessToken = (token) => {
   accessToken = token;
   try {

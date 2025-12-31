@@ -20,7 +20,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
- 
+
   useEffect(() => {
     let mounted = true;
 
@@ -29,10 +29,8 @@ export function AuthProvider({ children }) {
       try {
         //  Nếu đã có user → dùng luôn, khong gọi API
         const rawUser = localStorage.getItem('user');
-        if (rawUser) {
-          const parsedUser = JSON.parse(rawUser);
-          if (mounted) setUser(parsedUser);
-          return;
+        if (rawUser && mounted) {
+          setUser(JSON.parse(rawUser));
         }
 
         //  Chỉ khi reload / chưa login mới gọi refresh + profile
@@ -44,7 +42,6 @@ export function AuthProvider({ children }) {
         const profileRes = await userApi.getProfile();
         const currentUser = profileRes.user || profileRes;
 
-        if (!mounted) return;
         setUser(currentUser);
         localStorage.setItem('user', JSON.stringify(currentUser));
         localStorage.setItem('isLoggedIn', 'true');
@@ -95,7 +92,7 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  
+
   useEffect(() => {
     const interceptor = api.interceptors.response.use(
       (res) => res,

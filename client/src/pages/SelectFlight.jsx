@@ -114,38 +114,73 @@ export default function SelectFlight() {
     // include original search params so user can go back and change flight; pass flight object in state to avoid extra fetch
     const q = new URLSearchParams({ from: departureCity, to: arrivalCity, date: departureTime, passengers: passengerNum }).toString();
     navigate(`/book?flightId=${flight.id}&flightSeatId=${flightSeatId}&passengers=${passengerNum}&${q}`, { state: { flight } });
-  }; 
+  };
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-semibold mb-4">Chọn chuyến bay</h1>
-
-      <div className="mb-4">
-        <strong>Hành trình:</strong> {departureCity} → {arrivalCity} — {departureTime} • {passengerNum} khách
-      </div>
-
-      <div className="flex gap-6">
-        <div className="w-72">
-          <Filters onChange={applyFilters} />
+    <div className="min-h-screen bg-slate-50 py-8">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-2">
+            Chọn chuyến bay
+          </h1>
+          <p className="text-slate-600">
+            {departureCity} → {arrivalCity}
+            {departureTime && ` • ${departureTime}`}
+            {' • '}{passengerNum} hành khách
+          </p>
         </div>
 
-        <div className="flex-1">
-          {loading && <div>Đang tải chuyến bay…</div>}
-          {error && <div className="text-red-600">{error}</div>}
-          {!loading && !error && (
-            <>
-              {filtered.length === 0 ? (
-                <div className="bg-yellow-50 border border-yellow-100 p-4 rounded-md">
-                  <div className="font-medium text-yellow-800 mb-1">Không tìm thấy chuyến phù hợp</div>
-                  <div className="text-sm text-yellow-700">Gợi ý: kiểm tra lại điểm đi/điểm đến (hãy chọn từ danh sách gợi ý), hoặc thử ngày khác hoặc mở rộng khoảng giá.</div>
-                </div>
-              ) : (
-                <FlightList flights={filtered} onSelect={handleSelect} />
-              )}
-            </>
-          )}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Filters */}
+          <div className="lg:w-72">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+              <Filters onChange={applyFilters} />
+            </div>
+          </div>
+
+          {/* Results */}
+          <div className="flex-1">
+            {loading && (
+              <div className="bg-white rounded-xl border border-slate-200 p-6 text-slate-600">
+                Đang tải chuyến bay…
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4">
+                {error}
+              </div>
+            )}
+
+            {!loading && !error && (
+              <>
+                {filtered.length === 0 ? (
+                  <div className="bg-white rounded-xl p-12 text-center border border-slate-200">
+                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-slate-400 text-2xl">✈️</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                      Không tìm thấy chuyến bay phù hợp
+                    </h3>
+                    <p className="text-slate-600">
+                      Vui lòng thử thay đổi bộ lọc, ngày bay hoặc khoảng giá
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <FlightList
+                      flights={filtered}
+                      onSelect={handleSelect}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
+
 }
