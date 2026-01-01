@@ -8,6 +8,12 @@ export default function BookingManager() {
   const [loading, setLoading] = useState(false);
   const [viewItem, setViewItem] = useState(null);
   const toast = useToast();
+  const [cancelItem, setCancelItem] = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
+
+
+
+
 
   const load = async () => {
     setLoading(true);
@@ -20,14 +26,24 @@ export default function BookingManager() {
 
   useEffect(() => { load(); }, []);
 
-  const cancelTicket = async (t) => {
-    if (!confirm('Xác nhận hủy vé?')) return;
+  const cancelTicket = (t) => {
+    setCancelItem(t);
+  };
+
+  const confirmCancelTicket = async () => {
     try {
-      await ticketApi.update(t.id, { isCancelled: true });
+      await ticketApi.update(cancelItem.id, { isCancelled: true });
+      toast.success('Hủy vé thành công');
       load();
       setViewItem(null);
-    } catch (err) { console.error(err); toast.error('Lỗi hủy vé'); }
+    } catch (err) {
+      console.error(err);
+      toast.error('Lỗi hủy vé');
+    } finally {
+      setCancelItem(null);
+    }
   };
+
 
   const sendETicket = async (t) => {
     try {
@@ -36,7 +52,23 @@ export default function BookingManager() {
     } catch (err) { console.error(err); toast.error('Lỗi gửi e-ticket'); }
   };
 
-  const remove = async (id) => { if (!confirm('Xác nhận xóa?')) return; try { await ticketApi.delete(id); load(); } catch (err) { console.error(err); toast.error('Lỗi xóa vé'); } };
+  const remove = (id) => {
+    setConfirmId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await ticketApi.delete(confirmId);
+      toast.success('Đã xóa thành công');
+      load();
+    } catch (err) {
+      console.error(err);
+      toast.error('Lỗi khi xóa');
+    } finally {
+      setConfirmId(null);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-slate-50 py-8">
@@ -196,6 +228,98 @@ export default function BookingManager() {
             </div>
           )}
         </Modal>
+
+        <Modal
+          open={!!confirmId}
+          onClose={() => setConfirmId(null)}
+          title="Xác nhận xóa"
+        >
+          <div className="space-y-4">
+            {/* Icon */}
+            <div className="flex justify-center">
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-2xl">
+                ⚠️
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="text-center">
+              <p className="text-slate-800 font-medium mb-1">
+                Bạn có chắc chắn muốn xóa vé này?
+              </p>
+              <p className="text-sm text-slate-500">
+                Hành động này không thể hoàn tác sau khi thực hiện.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                onClick={() => setConfirmId(null)}
+                className="px-4 py-2 rounded-lg border border-slate-300
+                   text-slate-700 hover:bg-slate-100 transition"
+              >
+                Hủy
+              </button>
+
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 rounded-lg
+                   bg-red-600 text-white font-medium
+                   hover:bg-red-700 transition"
+              >
+                Xóa
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+        <Modal
+          open={!!cancelItem}
+          onClose={() => setCancelItem(null)}
+          title="Xác nhận hủy vé"
+        >
+          <div className="space-y-4">
+            {/* Icon */}
+            <div className="flex justify-center">
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-2xl">
+                ✈️
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="text-center">
+              <p className="text-slate-800 font-medium mb-1">
+                Bạn có chắc chắn muốn hủy vé này?
+              </p>
+              <p className="text-sm text-slate-500">
+                Vé đã hủy sẽ không thể khôi phục lại.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                onClick={() => setCancelItem(null)}
+                className="px-4 py-2 rounded-lg border border-slate-300
+                   text-slate-700 hover:bg-slate-100 transition"
+              >
+                Đóng
+              </button>
+
+              <button
+                onClick={confirmCancelTicket}
+                className="px-4 py-2 rounded-lg
+                   bg-red-600 text-white font-medium
+                   hover:bg-red-700 transition"
+              >
+                Hủy vé
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+
       </div>
     </div>
   );

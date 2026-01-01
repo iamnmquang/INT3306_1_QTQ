@@ -11,6 +11,7 @@ export default function AircraftManager() {
   const [editingId, setEditingId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const toast = useToast();
+  const [confirmId, setConfirmId] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -30,7 +31,7 @@ export default function AircraftManager() {
     e && e.preventDefault();
 
     if (!form.code || !form.manufacturer)
-      return alert('Mã và hãng là bắt buộc');
+      return toast.error('Mã và hãng là bắt buộc');
 
     const payload = {
       name: form.code,          // ⭐ QUAN TRỌNG
@@ -50,7 +51,7 @@ export default function AircraftManager() {
       load();
     } catch (err) {
       console.error(err);
-      alert('Lỗi lưu máy bay');
+      toast.error('Lỗi lưu máy bay');
     }
   };
 
@@ -59,7 +60,22 @@ export default function AircraftManager() {
   const updateSeat = (idx, key, value) => setForm(prev => ({ ...prev, seats: prev.seats.map((s, i) => i === idx ? ({ ...s, [key]: value }) : s) }));
   const removeSeat = (idx) => setForm(prev => ({ ...prev, seats: prev.seats.filter((_, i) => i !== idx) }));
 
-  const remove = async (id) => { if (!confirm('Xác nhận xóa?')) return; try { await aircraftApi.delete(id); load(); } catch (err) { console.error(err); alert('Lỗi xóa'); } };
+  const remove = (id) => {
+    setConfirmId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await aircraftApi.delete(confirmId);
+      toast.success('Đã xóa thành công');
+      load();
+    } catch (err) {
+      console.error(err);
+      toast.error('Lỗi khi xóa');
+    } finally {
+      setConfirmId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 py-8">
@@ -235,6 +251,51 @@ export default function AircraftManager() {
               </div>
             </div>
           </form>
+        </Modal>
+
+        <Modal
+          open={!!confirmId}
+          onClose={() => setConfirmId(null)}
+          title="Xác nhận xóa"
+        >
+          <div className="space-y-4">
+            {/* Icon */}
+            <div className="flex justify-center">
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-2xl">
+                ⚠️
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="text-center">
+              <p className="text-slate-800 font-medium mb-1">
+                Bạn có chắc chắn muốn xóa tàu bay này?
+              </p>
+              <p className="text-sm text-slate-500">
+                Hành động này không thể hoàn tác sau khi thực hiện.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                onClick={() => setConfirmId(null)}
+                className="px-4 py-2 rounded-lg border border-slate-300
+                           text-slate-700 hover:bg-slate-100 transition"
+              >
+                Hủy
+              </button>
+
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 rounded-lg
+                           bg-red-600 text-white font-medium
+                           hover:bg-red-700 transition"
+              >
+                Xóa
+              </button>
+            </div>
+          </div>
         </Modal>
       </div>
     </div>

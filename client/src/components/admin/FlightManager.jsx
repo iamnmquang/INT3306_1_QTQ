@@ -14,6 +14,7 @@ export default function FlightManager() {
   const [editingId, setEditingId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const toast = useToast();
+  const [confirmId, setConfirmId] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -44,7 +45,19 @@ export default function FlightManager() {
     } catch (err) { console.error(err); toast.error('Lỗi lưu chuyến bay'); }
   };
 
-  const remove = async (id) => { if (!confirm('Xác nhận xóa?')) return; try { await flightApi.delete(id); load(); } catch (err) { console.error(err); toast.error('Lỗi xóa'); } };
+  const handleConfirmDelete = async () => {
+    try {
+      await flightApi.delete(confirmId);
+      toast.success('Đã xóa thành công');
+      load();
+    } catch (err) {
+      console.error(err);
+      toast.error('Lỗi khi xóa');
+    } finally {
+      setConfirmId(null);
+    }
+  };
+
 
   const delayFlight = async (f) => {
     const newTime = prompt('Nhập giờ khởi hành mới (ISO hoặc "YYYY-MM-DDTHH:mm")', f.departureTime);
@@ -277,6 +290,52 @@ export default function FlightManager() {
             </div>
           </form>
         </Modal>
+
+        <Modal
+          open={!!confirmId}
+          onClose={() => setConfirmId(null)}
+          title="Xác nhận xóa"
+        >
+          <div className="space-y-4">
+            {/* Icon */}
+            <div className="flex justify-center">
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-2xl">
+                ⚠️
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="text-center">
+              <p className="text-slate-800 font-medium mb-1">
+                Bạn có chắc chắn muốn xóa bài chuyến bay này?
+              </p>
+              <p className="text-sm text-slate-500">
+                Hành động này không thể hoàn tác sau khi thực hiện.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                onClick={() => setConfirmId(null)}
+                className="px-4 py-2 rounded-lg border border-slate-300
+                   text-slate-700 hover:bg-slate-100 transition"
+              >
+                Hủy
+              </button>
+
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 rounded-lg
+                   bg-red-600 text-white font-medium
+                   hover:bg-red-700 transition"
+              >
+                Xóa
+              </button>
+            </div>
+          </div>
+        </Modal>
+
       </div>
     </div>
   );

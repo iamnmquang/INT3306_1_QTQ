@@ -11,6 +11,8 @@ import { useToast } from '../../context/ToastContext';
 const FIXED_NEWS_IMAGE = '/public/images/QTQAirlinelogo.jpg';
 
 export default function NewsManager() {
+  const [confirmId, setConfirmId] = useState(null);
+
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(false);
   const toast = useToast();
@@ -76,16 +78,23 @@ export default function NewsManager() {
     }
   };
 
-  const remove = async (id) => {
-    if (!confirm('Xác nhận xóa?')) return;
+  const remove = (id) => {
+    setConfirmId(id);
+  };
+
+  const handleConfirmDelete = async () => {
     try {
-      await newsApi.delete(id);
+      await newsApi.delete(confirmId);
+      toast.success('Đã xóa thành công');
       load();
     } catch (err) {
       console.error(err);
       toast.error('Lỗi khi xóa');
+    } finally {
+      setConfirmId(null);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-slate-50 py-8">
@@ -273,6 +282,53 @@ export default function NewsManager() {
             </div>
           )}
         </Modal>
+
+        <Modal
+          open={!!confirmId}
+          onClose={() => setConfirmId(null)}
+          title="Xác nhận xóa"
+        >
+          <div className="space-y-4">
+            {/* Icon */}
+            <div className="flex justify-center">
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-2xl">
+                ⚠️
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="text-center">
+              <p className="text-slate-800 font-medium mb-1">
+                Bạn có chắc chắn muốn xóa bài viết này?
+              </p>
+              <p className="text-sm text-slate-500">
+                Hành động này không thể hoàn tác sau khi thực hiện.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                onClick={() => setConfirmId(null)}
+                className="px-4 py-2 rounded-lg border border-slate-300
+                   text-slate-700 hover:bg-slate-100 transition"
+              >
+                Hủy
+              </button>
+
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 rounded-lg
+                   bg-red-600 text-white font-medium
+                   hover:bg-red-700 transition"
+              >
+                Xóa
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+
 
       </div>
     </div>
