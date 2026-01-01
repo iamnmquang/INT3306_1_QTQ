@@ -12,14 +12,13 @@ function isAuthenticated(req, res, next) {
     const token = authorization.split(' ')[1];
     const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
 
-    // 🔥 QUAN TRỌNG: map userId → id
+    //  map userId → id
     req.user = {
       id: payload.id || payload.userId,
       role: payload.role,
       email: payload.email,
     };
 
-    // giữ lại để tương thích code cũ
     req.payload = payload;
   } catch (err) {
     if (err.name === 'TokenExpiredError') {

@@ -2,7 +2,8 @@ const prisma = require('../../utils/prisma')
 
 const AircraftService = {
   getAll: async () => {
-    return await prisma.aircraft.findMany();
+    return await prisma.aircraft.findMany(
+    );
   },
 
   getById: async (id) => {
